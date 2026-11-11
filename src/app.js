@@ -2,7 +2,7 @@
  * Study Hub Academy - Lógica Principal (v2.0)
  * Arquitectura modular cliente-servidor con integración a Google Sheets CMS y Gamificación.
  */
-
+console.log("Aplicación iniciada");
 // URL de publicación CSV del AppConfig oficial (v1.4 - v2.0)
 const APP_CONFIG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGizzNKU8G5AAHx0B7X929ljOcclcnx7enTgDLixnaJ3Xn61buqcb8BkRGTt16qIUjQQKFIJch/pub?gid=0&single=true&output=csv";
 
