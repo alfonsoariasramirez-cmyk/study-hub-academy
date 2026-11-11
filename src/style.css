@@ -1,1 +1,214 @@
-/* Estilos CSS de la v2.0 */ 
+:root {
+    --bg-dark: #0b0f19;
+    --card-bg: #131b2e;
+    --accent-blue: #00d2ff;
+    --accent-red: #ff3366;
+    --accent-yellow: #ffcc00;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --border-color: #1e293b;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 2.2rem;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--accent-blue), var(--accent-yellow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+}
+
+/* Barra de Perfil y Rachas (EPIC-06) */
+.ego-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    background: rgba(0, 210, 255, 0.08);
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.ego-bar strong {
+    color: var(--accent-yellow);
+}
+
+.container {
+    width: 100%;
+    max-width: 800px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.loading, .error-box {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.1rem;
+}
+
+.error-box {
+    color: var(--accent-red);
+}
+
+.btn {
+    background: linear-gradient(135deg, #0070f3, var(--accent-blue));
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    margin-top: 15px;
+    min-height: 48px;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3);
+}
+
+.subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.subject-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.subject-card:hover {
+    border-color: var(--accent-blue);
+    background: rgba(0, 210, 255, 0.05);
+    transform: translateY(-3px);
+}
+
+.subject-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.subject-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.question-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 16px 20px;
+    border-radius: 10px;
+    color: var(--text-main);
+    text-align: left;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 55px;
+}
+
+.option-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent-blue);
+}
+
+.option-btn.correct {
+    background: rgba(0, 255, 128, 0.2);
+    border-color: #00ff80;
+}
+
+.option-btn.incorrect {
+    background: rgba(255, 51, 102, 0.2);
+    border-color: var(--accent-red);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.results-box {
+    text-align: center;
+    padding: 20px;
+}
+
+.score-display {
+    font-size: 3rem;
+    font-family: 'Montserrat', sans-serif;
+    color: var(--accent-yellow);
+    margin: 15px 0;
+}
