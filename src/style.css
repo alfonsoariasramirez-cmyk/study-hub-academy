@@ -1,3 +1,6 @@
+/* ==========================================================================
+   VARIABLES Y CONFIGURACIÓN GLOBAL (Design System: Blue Lock / Tsubasa)
+   ========================================================================== */
 :root {
     --bg-dark: #0b0f19;
     --card-bg: #131b2e;
@@ -51,7 +54,9 @@ h1 {
     margin-bottom: 12px;
 }
 
-/* Barra de Perfil y Rachas (EPIC-06) */
+/* ==========================================================================
+   [EPIC-06] ESTILOS DE LA BARRA DE GAMIFICACIÓN Y RACHAS
+   ========================================================================== */
 .ego-bar {
     display: flex;
     justify-content: center;
@@ -68,6 +73,9 @@ h1 {
     color: var(--accent-yellow);
 }
 
+/* ==========================================================================
+   CONTENEDORES Y TARJETAS DE INTERFAZ
+   ========================================================================== */
 .container {
     width: 100%;
     max-width: 800px;
@@ -109,6 +117,9 @@ h1 {
     box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3);
 }
 
+/* ==========================================================================
+   GRID DE MATERIAS Y TARJETAS TÁCTILES
+   ========================================================================== */
 .subjects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -147,6 +158,9 @@ h1 {
     font-size: 1rem;
 }
 
+/* ==========================================================================
+   VISTA DE CUESTIONARIO Y RESPUESTAS (OPTIMIZACIÓN MÓVIL)
+   ========================================================================== */
 .quiz-header {
     display: flex;
     justify-content: space-between;
@@ -179,7 +193,7 @@ h1 {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s;
-    min-height: 55px;
+    min-height: 55px; /* Altura optimizada para interacción táctil en smartphones */
 }
 
 .option-btn:hover {
