@@ -2,6 +2,26 @@
    VARIABLES Y CONFIGURACIÓN GLOBAL (Design System: Blue Lock / Tsubasa)
    ========================================================================== */
 :root {
+  --bg-primary: #0b0f19;
+  --bg-card: #131b2e;
+  --accent-neon: #00f0ff;
+  --accent-gold: #ffd700;
+  --text-main: #f8fafc;
+}
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+/* Tarjetas de EGO y estadísticas */
+.ego-card {
+  background: linear-gradient(135deg, #131b2e 0%, #1f2937 100%);
+  border: 2px solid var(--accent-neon);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  border-radius: 12px;
+}
+
+/* :root {
     --bg-dark: #0b0f19;
     --card-bg: #131b2e;
     --accent-blue: #00d2ff;
@@ -10,7 +30,7 @@
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
     --border-color: #1e293b;
-}
+} */
 
 * {
     box-sizing: border-box;
@@ -18,6 +38,7 @@
     padding: 0;
 }
 
+/*
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-dark);
@@ -28,6 +49,7 @@ body {
     align-items: center;
     padding: 20px;
 }
+*/
 
 header {
     text-align: center;
