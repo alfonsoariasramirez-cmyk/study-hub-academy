@@ -15,7 +15,7 @@ let activeQuizSubject = "";
 
 /**
  * ============================================================================
- * [EPIC-06] SISTEMA DE GAMIFICACIÓN, RACHAS Y PUNTOS DE EGO (LOCALSTORAGE)
+ * *[EPIC-06] SISTEMA DE GAMIFICACIÓN, RACHAS Y PUNTOS DE EGO (LOCALSTORAGE)
  * ============================================================================
  */
 let userStats = {
