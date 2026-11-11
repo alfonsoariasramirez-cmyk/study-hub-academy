@@ -30,6 +30,7 @@ let userStats = {
  * Implementa manejo defensivo de errores (try/catch) ante datos corruptos (TC-020).
  */
 function loadUserStats() {
+    console.log("Inicia loadUserStats");
     try {
         const saved = localStorage.getItem("study_hub_user_stats");
         if (saved) {
@@ -47,6 +48,7 @@ function loadUserStats() {
  * Si entra al día siguiente, incrementa la racha; si pasan más días, la reinicia.
  */
 function checkStreak() {
+    console.log("checkStreak");
     const today = new Date().toISOString().slice(0, 10);
     if (!userStats.lastLoginDate) {
         userStats.streak = 1;
@@ -71,6 +73,7 @@ function checkStreak() {
  * Persiste las estadísticas actuales en el localStorage del navegador.
  */
 function saveUserStats() {
+    console.log("saveUserStats");
     try {
         localStorage.setItem("study_hub_user_stats", JSON.stringify(userStats));
     } catch (e) {
@@ -82,6 +85,7 @@ function saveUserStats() {
  * Calcula el rango del estudiante basándose en sus Puntos de Experiencia (EP).
  */
 function updateEgoRank() {
+    console.log("Inicia updateEgoRank");
     if (userStats.ep >= 100) userStats.rank = "Delantero Estrella ⭐";
     else if (userStats.ep >= 50) userStats.rank = "Titular Convictivo ⚽";
     else if (userStats.ep >= 20) userStats.rank = "Juvenil Promesa 🏃‍♂️";
@@ -92,6 +96,7 @@ function updateEgoRank() {
  * Actualiza los elementos DOM de la barra superior con los valores de racha y EP.
  */
 function updateEgoBarUI() {
+    console.log("Inicia updateEgoBarUI");
     updateEgoRank();
     document.getElementById("streak-count").innerText = userStats.streak;
     document.getElementById("ep-score").innerText = userStats.ep;
@@ -110,6 +115,7 @@ function updateEgoBarUI() {
  * @returns {Array<Array<string>>} Matriz bidimensional de filas y columnas.
  */
 function parseCSV(text) {
+    console.log("Inicia parseCSV");
     let lines = [];
     let row = [""];
     let insideQuotes = false;
@@ -144,6 +150,7 @@ function parseCSV(text) {
  * Implementa control de caché dinámico mediante parámetros timestamp (TASK-504).
  */
 async function initApp() {
+    console.log("Inicia initApp");
     loadUserStats();
     showView('loading-view');
     try {
