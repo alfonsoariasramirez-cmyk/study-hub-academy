@@ -4,7 +4,7 @@
  */
 console.log("Inicia carga de app.js")
 // URL de publicación CSV del AppConfig oficial (v1.4 - v2.0)
-const APP_CONFIG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGizzNKU8G5AAHx0B7X929ljOcclcnx7enTgDLixnaJ3Xn61buqcb8BkRGTt16qIUjQQKFIJch/pub?gid=0&single=true&output=csv";
+const APP_CONFIG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGizzNKU8G5AAHx0B7X929ljOcclcnx7enTgDLixnaJ3Xn61buqcb8BkRGTt16qIUjQQKFIJch/pub?gid=112265702&single=true&output=csv";
 
 // Estado global de la aplicación
 let subjectsCatalog = [];
