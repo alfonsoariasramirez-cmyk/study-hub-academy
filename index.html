@@ -3,47 +3,391 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rise of New Champions: Academy Edition v1.7</title>
+    <title>Rise of New Champions: Academy Edition v2.1</title>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --bg-deep: #090d16;
+            --bg-card: #111827;
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --accent: #00f2fe;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --correct: #10b981;
+            --incorrect: #ef4444;
+            --border: #1f2937;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --bronze: #cd7f32;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif; }
+        body { background-color: var(--bg-deep); color: var(--text-main); padding: 20px; line-height: 1.6; min-height: 100vh; }
+        .container { max-width: 850px; margin: 0 auto; position: relative; }
+        
+        h1, h2, h3, .shonen-font { font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+
+        h1 { text-align: center; color: var(--accent); margin-bottom: 20px; font-size: 2.5rem; text-shadow: 0 0 15px rgba(0,242,254,0.3); }
+        h2 { color: var(--text-main); margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 1.5rem; }
+
+        .screen { display: none; background: var(--bg-card); padding: 30px; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
+        .screen.active { display: block; animation: fadeIn 0.4s ease-in; }
+
+        #loader { text-align: center; font-size: 1.2rem; color: var(--accent); padding: 60px; font-weight: bold; }
+        .spinner { border: 4px solid rgba(0, 242, 254, 0.1); border-left: 4px solid var(--accent); border-radius: 50%; width: 45px; height: 45px; animation: spin 1s linear infinite; margin: 0 auto 20px auto; }
+
+        .grid-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; }
+        
+        .card-btn { 
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%); 
+            color: var(--text-main); 
+            padding: 22px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            text-align: center; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            font-weight: 600; 
+            font-size: 1.1rem; 
+            border: 2px solid var(--border); 
+            width: 100%; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .card-btn:hover:not(:disabled) { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 0 20px var(--primary-glow); }
+        .card-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .card-btn.selected { border-color: var(--accent); background: linear-gradient(135deg, #1e3a8a 0%, #111827 100%); box-shadow: 0 0 15px var(--primary-glow); }
+        
+        .card-icon { font-size: 2.8rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+        
+        .subject-card { border-color: var(--primary); }
+        .subject-card:hover { background: linear-gradient(135deg, #1e3a8a 0%, #111827 100%); border-color: var(--accent); }
+
+        .stats-bar { display: flex; justify-content: space-between; background: rgba(31, 41, 55, 0.7); padding: 12px 18px; border-radius: 10px; margin-bottom: 20px; font-weight: 600; color: var(--accent); border: 1px solid var(--border); flex-wrap: wrap; gap: 10px;}
+        .stat-badge { background: #090d16; padding: 4px 12px; border-radius: 20px; font-size: 0.95rem; color: var(--text-main); border: 1px solid var(--border); transition: all 0.3s;}
+        
+        .difficulty-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .diff-Easy { background-color: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.4); }
+        .diff-Intermediate { background-color: #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.4); }
+        .diff-Hard { background-color: #f59e0b; box-shadow: 0 0 10px rgba(245,158,11,0.4); }
+        
+        .question-text { font-size: 1.35rem; margin-bottom: 25px; font-weight: 600; line-height: 1.8; color: #ffffff; }
+        
+        .action-btn { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border: none; padding: 14px 22px; border-radius: 8px; font-size: 1.05rem; font-family: 'Rajdhani', sans-serif; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 15px; box-shadow: 0 4px 15px rgba(37,99,235,0.4); }
+        .action-btn:hover:not(:disabled) { background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%); transform: translateY(-2px); box-shadow: 0 0 20px var(--primary-glow); }
+        .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .back-btn { background: #374151; font-size: 0.9rem; padding: 8px 16px; width: auto; margin-top: 0; box-shadow: none; }
+        .back-btn:hover { background: #4b5563; }
+        
+        .options-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .option-btn { background: #1f2937; border: 2px solid var(--border); padding: 16px; border-radius: 10px; cursor: pointer; font-size: 1.05rem; text-align: left; color: var(--text-main); transition: all 0.2s; }
+        .option-btn:hover:not(:disabled) { border-color: var(--accent); background: #374151; transform: translateX(4px); }
+        .option-btn:disabled { cursor: default; }
+        .option-btn.correct { background: var(--correct); color: white; border-color: var(--correct); box-shadow: 0 0 15px rgba(16,185,129,0.5); }
+        .option-btn.incorrect { background: var(--incorrect); color: white; border-color: var(--incorrect); box-shadow: 0 0 15px rgba(239,68,68,0.5); }
+
+        .inline-blank-input { display: inline-block; width: 190px; padding: 4px 10px; font-size: 1.2rem; border: none; border-bottom: 3px solid var(--accent); background: #1f2937; text-align: center; border-radius: 6px 6px 0 0; margin: 0 6px; font-weight: bold; color: var(--accent); }
+        .inline-blank-input:focus { outline: none; background: #374151; border-color: var(--primary); }
+
+        .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .match-col { display: flex; flex-direction: column; gap: 10px; }
+        .match-btn { background: #1f2937; border: 2px solid var(--border); padding: 14px; border-radius: 10px; cursor: pointer; text-align: center; transition: all 0.2s; font-size: 0.95rem; color: var(--text-main); min-height: 55px; display: flex; align-items: center; justify-content: center; }
+        .match-btn.selected { background: #1e3a8a; border-color: var(--accent); transform: scale(1.02); box-shadow: 0 0 12px var(--primary-glow); }
+        .match-btn.matched { background: var(--correct); color: white; border-color: var(--correct); cursor: default; opacity: 0.8; }
+        .match-btn.error { background: var(--incorrect); color: white; border-color: var(--incorrect); animation: shake 0.3s; }
+
+        .feedback { display: none; padding: 18px; border-radius: 10px; margin-top: 20px; animation: slideDown 0.3s; border: 1px solid var(--border); }
+        .feedback.correct-bg { background: rgba(16, 185, 129, 0.15); border-left: 6px solid var(--correct); }
+        .feedback.incorrect-bg { background: rgba(239, 68, 68, 0.15); border-left: 6px solid var(--incorrect); }
+        .feedback-title { font-weight: 700; font-size: 1.25rem; margin-bottom: 8px; font-family: 'Rajdhani', sans-serif; }
+        .explanation { font-size: 1rem; margin-bottom: 15px; color: #d1d5db; }
+        
+        .summary-stats { text-align: center; font-size: 1.2rem; margin: 30px 0; }
+        .big-number { font-size: 2.5rem; font-weight: 700; color: var(--accent); font-family: 'Rajdhani', sans-serif; text-shadow: 0 0 15px rgba(0,242,254,0.3); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+        /* [EPIC-06] Gamification Bar */
+        .ego-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            background: rgba(0, 242, 254, 0.08);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            margin: 15px auto 25px auto;
+            max-width: 600px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .ego-bar strong { color: var(--accent); font-size: 1.1rem; }
+
+        /* [BUGFIX-007 / Issue 4] Mode Selector Football Switch */
+        .mode-selector-switch {
+            position: relative;
+            display: flex;
+            background: #111827;
+            border: 2px solid var(--border);
+            border-radius: 30px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 25px auto;
+            overflow: hidden;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.5);
+        }
+        .mode-selector-switch input[type="radio"] { display: none; }
+        .mode-label {
+            flex: 1;
+            text-align: center;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            cursor: pointer;
+            z-index: 2;
+            transition: color 0.3s;
+            text-transform: uppercase;
+            font-family: 'Rajdhani', sans-serif;
+            letter-spacing: 1px;
+        }
+        .mode-selector-switch input[type="radio"]:checked + .mode-label { color: #090d16; }
+        .switch-slider {
+            position: absolute;
+            top: 0; left: 0;
+            height: 100%; width: 50%;
+            background: var(--accent);
+            border-radius: 30px;
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 0 15px var(--accent);
+        }
+        #mode-tourn:checked ~ .switch-slider {
+            transform: translateX(100%);
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+        }
+        
+        .config-group { margin-bottom: 20px; background: rgba(31, 41, 55, 0.5); padding: 15px; border-radius: 8px; border: 1px solid var(--border);}
+        .config-label { display: block; margin-bottom: 10px; font-weight: bold; color: var(--accent); font-family: 'Rajdhani', sans-serif; text-transform: uppercase; letter-spacing: 1px;}
+        
+        .styled-select, .styled-input { width: 100%; padding: 12px; background: #111827; border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; font-size: 1rem; margin-bottom: 10px;}
+        .styled-select:focus, .styled-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 8px var(--primary-glow);}
+        
+        .module-checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 10px;}
+        .module-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer; background: #1f2937; padding: 8px; border-radius: 6px; border: 1px solid var(--border); transition: all 0.2s;}
+        .module-checkbox-label:hover { border-color: var(--primary); }
+        .module-checkbox-label input:checked + span { color: var(--accent); font-weight: bold; }
+        
+        .available-badge { display: inline-block; background: rgba(0, 242, 254, 0.1); color: var(--accent); padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; margin-left: 10px; border: 1px solid var(--accent);}
+        
+        .timer-warning { background: rgba(239, 68, 68, 0.2) !important; border-color: var(--incorrect) !important; color: var(--incorrect) !important; animation: pulse-danger 0.8s infinite alternate; }
+        @keyframes pulse-danger { from { box-shadow: 0 0 5px rgba(239, 68, 68, 0.2); } to { box-shadow: 0 0 15px rgba(239, 68, 68, 0.8); transform: scale(1.05); } }
+
+        /* [EPIC-07] Tournament Results & Graph */
+        .trophy-container { text-align: center; margin: 20px 0; animation: bounceIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .trophy-icon { font-size: 5rem; line-height: 1; filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5)); margin-bottom: 10px; display: inline-block;}
+        .trophy-gold { color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.6); }
+        .trophy-silver { color: var(--silver); text-shadow: 0 0 20px rgba(192,192,192,0.6); }
+        .trophy-bronze { color: var(--bronze); text-shadow: 0 0 20px rgba(205,127,50,0.6); }
+        .trophy-none { filter: grayscale(100%); opacity: 0.7; }
+        .trophy-title { font-family: 'Rajdhani', sans-serif; font-size: 1.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;}
+
+        .score-row { display: flex; justify-content: space-around; background: rgba(31, 41, 55, 0.5); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px;}
+        .score-box { text-align: center; }
+        .score-box .label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;}
+        .score-box .val { font-size: 2rem; font-weight: 700; font-family: 'Rajdhani', sans-serif; }
+        
+        .chart-container { background: #111827; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px;}
+        .chart-title { text-align: center; font-family: 'Rajdhani', sans-serif; margin-bottom: 15px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px;}
+        .bar-row { display: flex; align-items: center; margin-bottom: 12px; }
+        
+        /* [BUGFIX-010 / Issue 7] Adjusted Bar Label to prevent truncation */
+        .bar-label { 
+            width: 150px; 
+            font-size: 0.85rem; 
+            text-align: right; 
+            padding-right: 15px; 
+            line-height: 1.2;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        
+        .bar-track { flex: 1; height: 24px; background: rgba(255,255,255,0.05); border-radius: 12px; display: flex; overflow: hidden; border: 1px solid var(--border); position: relative;}
+        .bar-fill-correct { height: 100%; background: linear-gradient(90deg, #059669, var(--correct)); transition: width 1s ease-out;}
+        .bar-fill-incorrect { height: 100%; background: linear-gradient(90deg, #b91c1c, var(--incorrect)); transition: width 1s ease-out;}
+        .bar-val { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);}
+
+        /* [BUGFIX-005 / Issue 2] Exp Animation Sequence Refined */
+        .exp-fly-element {
+            position: fixed;
+            font-size: 4rem;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 30px var(--accent), 0 0 10px white;
+            z-index: 9999;
+            pointer-events: none;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+        }
+
+        .exp-anim-phase1 {
+            animation: expZoom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .exp-anim-phase2 {
+            /* Smoother curve, holds opacity until the last 0.4s to simulate hitting the bar */
+            transition: transform 0.8s cubic-bezier(0.5, -0.5, 0.5, 1.5), opacity 0.4s ease-in 0.4s !important;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes expZoom {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        @media(max-width: 600px) {
+            .matching-grid { grid-template-columns: 1fr; }
+            .container { padding: 5px; }
+            .screen { padding: 18px; }
+            .ego-bar { flex-direction: column; gap: 10px; align-items: center; }
+            .score-row { flex-wrap: wrap; gap: 15px; }
+            .bar-label { width: 95px; font-size: 0.75rem; }
+        }
+    </style>
 </head>
 <body>
 
 <div class="container">
     <h1 id="app-title">⚡ Loading Academy...</h1>
 
-    <!-- [EPIC-06] Barra de Gamificación (Oculta hasta cargar datos) -->
+    <!-- [EPIC-06] Gamification Profile Bar -->
     <div id="ego-profile-bar" class="ego-bar" style="display: none;">
         <span>🔥 Racha: <strong id="streak-count">0</strong> días</span>
         <span>⭐ Exp: <strong id="exp-score">0</strong></span>
         <span>⚽ Rango: <strong id="ego-rank">Novato</strong></span>
     </div>
 
+    <!-- Screen: Subject Selection -->
     <div id="subject-select" class="screen">
         <h2 style="justify-content: center;" class="shonen-font">Selecciona tu Materia</h2>
         <div class="grid-layout" id="subject-grid"></div>
     </div>
 
+    <!-- Screen: Loader -->
     <div id="loader" class="screen active">
         <div class="spinner"></div>
         <span id="loader-text">Conectando con la Academia...</span>
     </div>
 
+    <!-- Screen: Dashboard (Mode Selector & Training Modules) -->
     <div id="dashboard" class="screen">
         <h2>
-            <span id="current-subject-title" class="shonen-font">Módulos de Entrenamiento</span>
+            <span id="current-subject-title" class="shonen-font">Modo Entrenamiento</span>
             <button class="action-btn back-btn" onclick="confirmChangeSubject()">⬅ Cambiar Materia</button>
         </h2>
-        <div class="grid-layout" id="module-grid"></div>
+        
+        <!-- [BUGFIX-007 / Issue 4] Football Style Switch -->
+        <div class="mode-selector-switch">
+            <input type="radio" id="mode-train" name="game-mode" value="training" checked onchange="setGameMode('training')">
+            <label for="mode-train" class="mode-label">Entrenamiento</label>
+            
+            <input type="radio" id="mode-tourn" name="game-mode" value="tournament" onchange="setGameMode('tournament')">
+            <label for="mode-tourn" class="mode-label">Torneo</label>
+            
+            <div class="switch-slider"></div>
+        </div>
+
+        <!-- View: Training Mode (Original Module Selection) -->
+        <div id="view-training" class="grid-layout"></div>
+
+        <!-- View: Tournament Configuration [EPIC-07] -->
+        <div id="view-tournament" style="display: none;">
+            <div class="config-group">
+                <label class="config-label">Escala del Torneo</label>
+                <select id="tourney-scale" class="styled-select" onchange="handleTourneyScaleChange()">
+                    <option value="local">Torneo Local (1 Módulo)</option>
+                    <option value="national">Torneo Nacional (Múltiples Módulos)</option>
+                    <option value="world">Torneo Mundial (Todos los Módulos)</option>
+                </select>
+            </div>
+
+            <div class="config-group" id="module-selection-group">
+                <label class="config-label">Selección de Módulos</label>
+                <div id="module-checkboxes" class="module-checkbox-grid"></div>
+            </div>
+
+            <div class="config-group">
+                <label class="config-label">Dificultad del Rival</label>
+                <!-- [BUGFIX-008 / Issue 5] Nomenclature Standard -->
+                <select id="tourney-difficulty" class="styled-select" onchange="updateAvailableQuestionsPool()">
+                    <option value="all">World Class (Todas)</option>
+                    <option value="Easy">Beginner (Fácil)</option>
+                    <option value="Intermediate">Professional (Intermedio)</option>
+                    <option value="Hard">Legendary (Difícil)</option>
+                </select>
+            </div>
+
+            <div class="grid-layout" style="gap: 15px;">
+                <div class="config-group" style="margin-bottom: 0;">
+                    <label class="config-label">Cantidad de Preguntas</label>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="number" id="tourney-q-count" class="styled-input" style="margin-bottom: 0;" min="1" value="10" oninput="validateQCount()">
+                        <span id="tourney-available-badge" class="available-badge">Disponibles: 0</span>
+                    </div>
+                </div>
+                <div class="config-group" style="margin-bottom: 0;">
+                    <label class="config-label">Tiempo del Partido</label>
+                    <!-- [BUGFIX-009 / Issue 6] Football Matches Time Settings -->
+                    <select id="tourney-time" class="styled-select" style="margin-bottom: 0;">
+                        <option value="12">Fútbol Playa (12 Minutos)</option>
+                        <option value="20" selected>Fútbol 5 (20 Minutos)</option>
+                        <option value="25">Fútbol 7 (25 Minutos)</option>
+                        <option value="30">Fútbol 8 (30 Minutos)</option>
+                        <option value="45">Partido Oficial (45 Minutos)</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="btn-start-tourney" class="action-btn" style="margin-top: 25px; padding: 18px; font-size: 1.2rem;" onclick="startTournament()">⚽ Iniciar Torneo</button>
+        </div>
     </div>
 
+    <!-- Screen: Quiz / Match -->
     <div id="quiz" class="screen">
-        <!-- [EPIC-07] Stats bar ajustada para incluir el temporizador -->
-        <div class="stats-bar" style="flex-wrap: wrap; gap: 10px;">
-            <span>Intentos: <span id="attempts-count" class="stat-badge">0</span></span>
-            <span>Aciertos: <span id="correct-count" class="stat-badge">0</span></span>
-            <span>Restantes: <span id="queue-count" class="stat-badge">0</span></span>
-            <span id="timer-badge" class="stat-badge" style="border-color: var(--accent); min-width: 80px; text-align: center;">⏱️ <span id="time-left">05:00</span></span>
+        <!-- [EPIC-07] Scoreboard HUD -->
+        <div class="stats-bar" id="scoreboard-hud">
+            <!-- Training HUD -->
+            <span class="hud-training">Intentos: <span id="attempts-count" class="stat-badge">0</span></span>
+            <span class="hud-training">Aciertos: <span id="correct-count" class="stat-badge">0</span></span>
+            <span class="hud-training">Restantes: <span id="queue-count" class="stat-badge">0</span></span>
+            
+            <!-- Tournament HUD -->
+            <span class="hud-tourney" style="display: none; color: var(--text-main);">GF (Correctas): <span id="tourney-gf" class="stat-badge" style="border-color: var(--correct); color: var(--correct);">0</span></span>
+            <span class="hud-tourney" style="display: none; color: var(--text-main);">GC (Errores): <span id="tourney-gc" class="stat-badge" style="border-color: var(--incorrect); color: var(--incorrect);">0</span></span>
+            <span class="hud-tourney" style="display: none; color: var(--text-main);">Jugada: <span id="tourney-progress" class="stat-badge">1/10</span></span>
+            <span class="hud-tourney" id="timer-badge" style="display: none; border-color: var(--accent); min-width: 80px; text-align: center; border-radius: 20px; padding: 4px 12px; background: #090d16;">⏱️ <span id="time-left">00:00</span></span>
         </div>
         
         <span id="q-difficulty" class="difficulty-badge diff-Easy">Fácil</span>
@@ -58,12 +402,12 @@
         </div>
     </div>
 
+    <!-- Screen: Summary (Training) -->
     <div id="summary" class="screen">
-        <h2 id="summary-title" style="justify-content: center;" class="shonen-font">¡Entrenamiento Superado! 🎉</h2>
+        <h2 style="justify-content: center;" class="shonen-font">¡Entrenamiento Superado! 🎉</h2>
         <div class="summary-stats">
             <p>Retos Dominados: <br><span class="big-number" id="sum-correct">0</span></p>
             <p style="margin-top: 15px;">Intentos Totales: <br><span class="big-number" id="sum-attempts" style="color: var(--primary);">0</span></p>
-            <!-- [EPIC-06] Feedback de Puntos de Experiencia Obtenidos -->
             <p style="margin-top: 15px;">Experiencia Obtenida: <br><span class="big-number" id="sum-exp" style="color: var(--correct);">+0 Exp</span></p>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 15px;">(Las jugadas fallidas regresaron a la cancha para perfeccionar tu técnica)</p>
         </div>
@@ -71,7 +415,1101 @@
             <button class="action-btn" style="background: var(--accent); color: #090d16; width:auto;" onclick="showScreen('dashboard')">Volver al Vestidor</button>
         </div>
     </div>
+
+    <!-- Screen: Tournament Results [EPIC-07] -->
+    <div id="tournament-results" class="screen">
+        <h2 id="tourney-result-title" style="justify-content: center;" class="shonen-font">Fin del Partido ⚽</h2>
+        
+        <div class="trophy-container" id="tourney-trophy-container">
+            <div id="tourney-trophy-icon" class="trophy-icon trophy-gold">🏆</div>
+            <div id="tourney-trophy-title" class="trophy-title trophy-gold">Rango S: Oro</div>
+        </div>
+
+        <div class="score-row">
+            <div class="score-box">
+                <span class="label">Calificación</span>
+                <span class="val" id="tourney-grade" style="color: var(--accent);">0%</span>
+            </div>
+            <div class="score-box">
+                <span class="label">GF (Aciertos)</span>
+                <span class="val" id="tourney-res-correct" style="color: var(--correct);">0</span>
+            </div>
+            <div class="score-box">
+                <span class="label">GC (Errores)</span>
+                <span class="val" id="tourney-res-incorrect" style="color: var(--incorrect);">0</span>
+            </div>
+            <div class="score-box">
+                <span class="label">Exp Ganada</span>
+                <span class="val" id="tourney-res-exp" style="color: var(--gold);">+0</span>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h3 class="chart-title">Rendimiento por Subtema (Scouting)</h3>
+            <div id="tourney-chart">
+                <!-- Bar rows injected here -->
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <button class="action-btn" style="background: var(--primary); padding: 18px; font-size: 1.2rem;" onclick="closeTournamentResults()">Cerrar y Reclamar Exp ⚡</button>
+        </div>
+    </div>
+    
+    <!-- Element for Exp Animation -->
+    <div id="exp-fly-element" class="exp-fly-element">+0 Exp</div>
 </div>
-<script src="app.js" defer></script>
+
+<script>
+    /**
+     * EPIC-07: Modo Simulador de Torneo de Fútbol / Examen Configurable (v2.1 Fixes)
+     * US-701: Selector de Modo (Entrenamiento/Torneo) - (Switch UX Fix)
+     * US-702: Configurador de Torneo y Cálculo Dinámico - (Nomenclatura Fix)
+     * US-703: Marcador en Vivo y Reloj - (Audio/Tiempo Fix)
+     * US-704: Estadísticas, Gráfica por Subtopic, Trofeos y Animación Exp - (Chart & Anim Fix)
+     */
+     
+    // Data Source Configuration
+    const CONFIG_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGizzNKU8G5AAHx0B7X929ljOcclcnx7enTgDLixnaJ3Xn61buqcb8BkRGTt16qIUjQQKFIJch/pub?gid=112265702&single=true&output=csv';
+
+    // Application State
+    let SUBJECT_CATALOG = [];
+    let modulesData = {}; // Key: Category, Value: Array of questions
+    let currentQueue = [];
+    let currentQuestion = null;
+    let currentSubjectName = '';
+    let quizActive = false;
+    let gameMode = 'training'; // 'training' | 'tournament'
+
+    // Training Stats
+    let stats = { correct: 0, attempts: 0 };
+    
+    // Tournament Stats & State
+    let tourneyStats = { total: 0, correct: 0, incorrect: 0, current: 0 };
+    let tourneyHistory = []; // Tracks responses for post-match analysis
+    let timerInterval = null;
+    let timeLeft = 0;
+    let initialTourneyTime = 0;
+    let pendingEarnedExp = 0; // Exp held until results screen closed
+
+    // Epic-06: Gamification State
+    let userStats = { streak: 0, exp: 0, rank: "Novato", lastLoginDate: "" };
+    let sessionExp = 0; 
+
+    // Web Audio API Setup
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+
+    function playSound(type) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'incorrect') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.25);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'tick') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(1200, now + 0.05);
+                gain.gain.setValueAtTime(0.1, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'time_warning') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(1000, now);
+                osc.frequency.setValueAtTime(1200, now + 0.1);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            }
+        } catch (e) { console.log("Audio error:", e); }
+    }
+
+    // --- EPIC-06: Storage & Rank Management ---
+    function loadUserStats() {
+        try {
+            const saved = localStorage.getItem("study_hub_user_stats_exp");
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Fix: Merge defaults para evitar campos faltantes en schemas viejos
+                userStats = {
+                    streak: parsed.streak !== undefined ? parsed.streak : 0,
+                    exp: parsed.exp !== undefined ? parsed.exp : 0,
+                    rank: parsed.rank !== undefined ? parsed.rank : "Novato",
+                    lastLoginDate: parsed.lastLoginDate !== undefined ? parsed.lastLoginDate : ""
+                };
+            }
+            checkStreak();
+        } catch (e) { 
+            console.error("Error al leer localStorage:", e); 
+        }
+        updateEgoBarUI();
+        document.getElementById('ego-profile-bar').style.display = 'flex';
+    }
+
+    function checkStreak() {
+        const today = new Date().toISOString().slice(0, 10);
+        if (!userStats.lastLoginDate) {
+            userStats.streak = 1;
+            userStats.lastLoginDate = today;
+        } else {
+            const lastDate = new Date(userStats.lastLoginDate);
+            const currentDate = new Date(today);
+            const diffDays = Math.floor((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 1) {
+                userStats.streak++;
+                userStats.lastLoginDate = today;
+            } else if (diffDays > 1) {
+                userStats.streak = 1; 
+                userStats.lastLoginDate = today;
+            }
+        }
+        saveUserStats();
+    }
+
+    function saveUserStats() {
+        try { localStorage.setItem("study_hub_user_stats_exp", JSON.stringify(userStats)); } 
+        catch (e) { console.error("Error al guardar en localStorage:", e); }
+    }
+
+    function updateEgoRank() {
+        if (userStats.exp >= 1000) userStats.rank = "Delantero Estrella ⭐";
+        else if (userStats.exp >= 500) userStats.rank = "Titular Indiscutible ⚽";
+        else if (userStats.exp >= 200) userStats.rank = "Promesa del Equipo 🏃‍♂️";
+        else userStats.rank = "Novato 🐣";
+    }
+
+    function updateEgoBarUI() {
+        updateEgoRank();
+        document.getElementById("streak-count").innerText = userStats.streak;
+        document.getElementById("exp-score").innerText = userStats.exp;
+        document.getElementById("ego-rank").innerText = userStats.rank;
+    }
+
+    // --- Core Navigation & Parser ---
+    function parseCSV(text) {
+        let result = [], row = [], cell = '', insideQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i], nextChar = text[i + 1];
+            if (char === '"' && insideQuotes && nextChar === '"') { cell += '"'; i++; }
+            else if (char === '"') { insideQuotes = !insideQuotes; }
+            else if (char === ',' && !insideQuotes) { row.push(cell.trim()); cell = ''; }
+            else if ((char === '\n' || char === '\r') && !insideQuotes) {
+                if (char === '\r' && nextChar === '\n') i++; 
+                row.push(cell.trim());
+                if(row.join('') !== '') result.push(row);
+                row = []; cell = '';
+            } else { cell += char; }
+        }
+        if (cell || row.length > 0) { row.push(cell.trim()); result.push(row); }
+        return result;
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        quizActive = (id === 'quiz');
+    }
+
+    function confirmChangeSubject() {
+        if (quizActive && currentQueue.length > 0) {
+            if (confirm("⚠️ ¿Estás seguro de salir? Perderás el progreso de tu partido actual.")) {
+                clearInterval(timerInterval);
+                quizActive = false;
+                showScreen('subject-select');
+            }
+        } else {
+            clearInterval(timerInterval);
+            showScreen('subject-select');
+        }
+    }
+
+    // --- Initialization ---
+    async function initApp() {
+        loadUserStats(); 
+        try {
+            const cacheBusterUrl = CONFIG_CSV_URL + '&t=' + Date.now();
+            const response = await fetch(cacheBusterUrl);
+            if (!response.ok) throw new Error("Error HTTP: " + response.status);
+            
+            const csvText = await response.text();
+            const data = parseCSV(csvText);
+            
+            SUBJECT_CATALOG = [];
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (row.length < 3) continue;
+                if (row[0] === 'Setting' && row[1] === 'AppTitle') {
+                    document.getElementById('app-title').innerText = '⚽ ' + row[2].replace('v1.0', 'v2.1');
+                } else if (row[0] === 'Subject') {
+                    SUBJECT_CATALOG.push({ id: row[1], name: row[2], icon: row[3], url: row[4] });
+                }
+            }
+            renderSubjects();
+        } catch (error) {
+            document.getElementById('loader').innerHTML = `
+                ❌ Error de conexión con la Academia.<br><br>
+                <button class="action-btn" style="width: auto; background: var(--accent); color: #090d16;" onclick="initApp()">🔄 Reintentar Conexión</button>`;
+        }
+    }
+
+    function renderSubjects() {
+        const grid = document.getElementById('subject-grid');
+        grid.innerHTML = '';
+        SUBJECT_CATALOG.forEach(subject => {
+            const btn = document.createElement('button');
+            btn.className = 'card-btn subject-card';
+            btn.innerHTML = `<span class="card-icon">${subject.icon}</span> <span>${subject.name}</span>`;
+            btn.onclick = () => { initAudio(); loadSubjectData(subject.url, subject.name); };
+            grid.appendChild(btn);
+        });
+        showScreen('subject-select');
+    }
+
+    async function loadSubjectData(csvUrl, subjectName) {
+        currentSubjectName = subjectName;
+        document.getElementById('loader-text').innerText = `Cargando datos de ${subjectName}...`;
+        showScreen('loader');
+        modulesData = {}; 
+
+        if (!csvUrl) {
+            document.getElementById('loader').innerHTML = '❌ URL no configurada para ' + subjectName;
+            return;
+        }
+
+        try {
+            const cacheBusterUrl = csvUrl + (csvUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            const response = await fetch(cacheBusterUrl);
+            if (!response.ok) throw new Error("Fallo de red");
+
+            const csvText = await response.text();
+            const data = parseCSV(csvText);
+            
+            let hasData = false;
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (row.length < 8 || !row[0]) continue; 
+                hasData = true;
+                
+                const category = row[0];
+                const activityType = row[8] ? row[8].trim().toLowerCase() : 'multiple_choice';
+                const subtopic = row[9] ? row[9].trim() : category; 
+
+                const qObj = {
+                    question: row[1],
+                    options: [row[2], row[3], row[4]].filter(Boolean),
+                    correctAnswer: row[5],
+                    explanation: row[6],
+                    difficulty: row[7],
+                    type: activityType,
+                    subtopic: subtopic,
+                    category: category
+                };
+
+                if (!modulesData[category]) modulesData[category] = [];
+                modulesData[category].push(qObj);
+            }
+
+            if (!hasData) {
+                document.getElementById('loader').innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom:10px;">📋</div>
+                    No hay datos en ${subjectName}.<br><br>
+                    <button class="action-btn back-btn" onclick="showScreen('subject-select')">Volver</button>`;
+            } else {
+                setGameMode('training'); // Default mode
+                renderDashboard();
+            }
+        } catch (error) {
+            document.getElementById('loader').innerHTML = `
+                ❌ Error al cargar ${subjectName}.<br><br>
+                <button class="action-btn" style="width: auto; background: var(--accent); color: #090d16;" onclick="loadSubjectData('${csvUrl}', '${subjectName}')">🔄 Reintentar</button>`;
+        }
+    }
+
+    // --- EPIC-07: Dashboard & Mode Management ---
+    function setGameMode(mode) {
+        gameMode = mode;
+        
+        // Fix: Bug 4 - Sincronizar el radio button UI internamente
+        document.getElementById('mode-train').checked = (mode === 'training');
+        document.getElementById('mode-tourn').checked = (mode === 'tournament');
+        
+        const viewTrain = document.getElementById('view-training');
+        const viewTourn = document.getElementById('view-tournament');
+        const title = document.getElementById('current-subject-title');
+
+        if (mode === 'training') {
+            viewTrain.style.display = 'grid';
+            viewTourn.style.display = 'none';
+            title.innerText = 'Modo Entrenamiento'; 
+        } else {
+            viewTrain.style.display = 'none';
+            viewTourn.style.display = 'block';
+            title.innerText = 'Modo Torneo';
+            buildTournamentConfigUI();
+        }
+    }
+
+    function renderDashboard() {
+        const grid = document.getElementById('view-training');
+        grid.innerHTML = '';
+        Object.keys(modulesData).forEach(category => {
+            const card = document.createElement('button');
+            card.className = 'card-btn';
+            card.innerText = category;
+            card.onclick = () => { initAudio(); startTrainingModule(category); };
+            grid.appendChild(card);
+        });
+        showScreen('dashboard');
+    }
+
+    // --- EPIC-07: Tournament Configuration Engine ---
+    function buildTournamentConfigUI() {
+        const selectElement = document.getElementById('tourney-scale');
+        selectElement.value = 'local';
+        handleTourneyScaleChange();
+    }
+
+    function handleTourneyScaleChange() {
+        const scale = document.getElementById('tourney-scale').value;
+        const group = document.getElementById('module-selection-group');
+        const cbContainer = document.getElementById('module-checkboxes');
+        cbContainer.innerHTML = '';
+
+        const categories = Object.keys(modulesData);
+
+        if (scale === 'world') {
+            group.style.display = 'none'; 
+        } else {
+            group.style.display = 'block';
+            categories.forEach((cat, index) => {
+                const label = document.createElement('label');
+                label.className = 'module-checkbox-label';
+                
+                const input = document.createElement('input');
+                input.type = scale === 'local' ? 'radio' : 'checkbox';
+                input.name = 'tourney_module_select';
+                input.value = cat;
+                if (index === 0) input.checked = true; 
+                
+                input.onchange = updateAvailableQuestionsPool;
+
+                const span = document.createElement('span');
+                span.innerText = cat;
+
+                label.appendChild(input);
+                label.appendChild(span);
+                cbContainer.appendChild(label);
+            });
+        }
+        
+        document.getElementById('tourney-difficulty').value = 'all';
+        updateAvailableQuestionsPool();
+    }
+
+    function updateAvailableQuestionsPool() {
+        const scale = document.getElementById('tourney-scale').value;
+        const diff = document.getElementById('tourney-difficulty').value;
+        let selectedModules = [];
+
+        if (scale === 'world') {
+            selectedModules = Object.keys(modulesData);
+        } else {
+            const inputs = document.querySelectorAll('input[name="tourney_module_select"]:checked');
+            inputs.forEach(i => selectedModules.push(i.value));
+        }
+
+        let availableQ = [];
+        selectedModules.forEach(cat => {
+            if (modulesData[cat]) {
+                modulesData[cat].forEach(q => {
+                    if (diff === 'all' || q.difficulty === diff) {
+                        availableQ.push(q);
+                    }
+                });
+            }
+        });
+
+        const availableCount = availableQ.length;
+        const badge = document.getElementById('tourney-available-badge');
+        const inputCount = document.getElementById('tourney-q-count');
+        const btnStart = document.getElementById('btn-start-tourney');
+
+        badge.innerText = `Disponibles: ${availableCount}`;
+        inputCount.max = availableCount;
+
+        if (availableCount === 0) {
+            badge.style.color = 'var(--incorrect)';
+            badge.style.borderColor = 'var(--incorrect)';
+            btnStart.disabled = true;
+            btnStart.innerText = '⚠️ Cero Preguntas Disponibles';
+        } else {
+            badge.style.color = 'var(--accent)';
+            badge.style.borderColor = 'var(--accent)';
+            btnStart.disabled = false;
+            btnStart.innerText = '⚽ Iniciar Torneo';
+            if (parseInt(inputCount.value) > availableCount) {
+                inputCount.value = availableCount;
+            }
+        }
+        
+        window.tourneyAvailablePool = availableQ;
+    }
+
+    function validateQCount() {
+        const input = document.getElementById('tourney-q-count');
+        const max = parseInt(input.max) || 0;
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) input.value = 1;
+        if (val > max) input.value = max;
+    }
+
+    // --- Mode Starters ---
+    function startTrainingModule(category) {
+        gameMode = 'training';
+        currentQueue = shuffleArray(JSON.parse(JSON.stringify(modulesData[category])));
+        stats = { correct: 0, attempts: 0 };
+        sessionExp = 0; 
+        
+        setupHUD();
+        showScreen('quiz');
+        loadNextQuestion();
+    }
+
+    function startTournament() {
+        gameMode = 'tournament';
+        const requestedCount = parseInt(document.getElementById('tourney-q-count').value);
+        const minutes = parseInt(document.getElementById('tourney-time').value);
+        
+        let pool = JSON.parse(JSON.stringify(window.tourneyAvailablePool || []));
+        pool = shuffleArray(pool);
+        currentQueue = pool.slice(0, requestedCount);
+
+        tourneyStats = { total: currentQueue.length, correct: 0, incorrect: 0, current: 0 };
+        tourneyHistory = []; 
+        pendingEarnedExp = 0;
+        
+        setupHUD();
+        showScreen('quiz');
+        
+        startTournamentTimer(minutes);
+        loadNextQuestion();
+    }
+
+    // --- EPIC-07: HUD & Timer Engine ---
+    function setupHUD() {
+        const trainEls = document.querySelectorAll('.hud-training');
+        const tournEls = document.querySelectorAll('.hud-tourney');
+
+        if (gameMode === 'training') {
+            trainEls.forEach(el => el.style.display = 'inline-block');
+            tournEls.forEach(el => el.style.display = 'none');
+        } else {
+            trainEls.forEach(el => el.style.display = 'none');
+            tournEls.forEach(el => el.style.display = 'inline-block');
+        }
+    }
+
+    function startTournamentTimer(minutes) {
+        clearInterval(timerInterval);
+        initialTourneyTime = minutes * 60;
+        timeLeft = initialTourneyTime; 
+        updateTimerUI();
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerUI();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                forceTimeout();
+            }
+        }, 1000);
+    }
+
+    function updateTimerUI() {
+        const timeEl = document.getElementById('time-left');
+        const badgeEl = document.getElementById('timer-badge');
+        
+        if (!timeEl) return;
+        
+        const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+        const sec = (timeLeft % 60).toString().padStart(2, '0');
+        timeEl.innerText = `${min}:${sec}`;
+        
+        // Fix: Bug 6 - Advertencia solo en el último minuto
+        const warningThreshold = 60;
+
+        if (timeLeft <= warningThreshold && timeLeft > 0 && badgeEl) {
+            badgeEl.classList.add('timer-warning');
+            
+            // Intensificar la alerta de audio
+            if (timeLeft <= 10) {
+                playSound('time_warning'); // Cada segundo en los últimos 10s
+            } else if (timeLeft % 10 === 0) {
+                playSound('time_warning'); // Cada 10 segundos el resto del minuto
+            }
+        } else if (badgeEl) {
+            badgeEl.classList.remove('timer-warning');
+        }
+    }
+
+    function forceTimeout() {
+        quizActive = false;
+        document.getElementById('feedback-panel').style.display = 'none';
+        playSound('incorrect'); 
+        
+        while (currentQueue.length > 0) {
+            const missedQ = currentQueue.shift();
+            tourneyStats.incorrect++;
+            tourneyHistory.push({ subtopic: missedQ.subtopic, isCorrect: false });
+        }
+        
+        endTournament(true);
+    }
+
+    // --- Quiz Engine Core ---
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function removeAccents(str) {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
+
+    function updateStats() {
+        if (gameMode === 'training') {
+            document.getElementById('attempts-count').innerText = stats.attempts;
+            document.getElementById('correct-count').innerText = stats.correct;
+            document.getElementById('queue-count').innerText = currentQueue.length;
+        } else {
+            document.getElementById('tourney-gf').innerText = tourneyStats.correct;
+            document.getElementById('tourney-gc').innerText = tourneyStats.incorrect;
+            const currentDisp = Math.min(tourneyStats.current + 1, tourneyStats.total);
+            document.getElementById('tourney-progress').innerText = `${currentDisp}/${tourneyStats.total}`;
+        }
+    }
+
+    function loadNextQuestion() {
+        if (currentQueue.length === 0) {
+            if (gameMode === 'training') return endTrainingModule();
+            else return endTournament(false);
+        }
+        
+        currentQuestion = currentQueue[0];
+        updateStats();
+
+        const diffEl = document.getElementById('q-difficulty');
+        
+        // Fix: Bug 5 - Nomenclatura futbolera en los badges de dificultad
+        const diffNomenclature = {
+            "Easy": "Beginner (Fácil)",
+            "Intermediate": "Professional (Intermedio)",
+            "Hard": "Legendary (Difícil)"
+        };
+        diffEl.innerText = diffNomenclature[currentQuestion.difficulty] || currentQuestion.difficulty;
+        diffEl.className = `difficulty-badge diff-${currentQuestion.difficulty}`;
+        
+        document.getElementById('q-text').innerHTML = '';
+        document.getElementById('feedback-panel').style.display = 'none';
+
+        const container = document.getElementById('activity-container');
+        container.innerHTML = '';
+
+        if (currentQuestion.type === 'true_false') {
+            document.getElementById('q-text').innerText = currentQuestion.question;
+            renderTrueFalse(container);
+        } else if (currentQuestion.type === 'fill_blanks') {
+            renderFillBlanks(container);
+        } else if (currentQuestion.type === 'matching') {
+            document.getElementById('q-text').innerText = currentQuestion.question;
+            renderMatching(container);
+        } else {
+            document.getElementById('q-text').innerText = currentQuestion.question;
+            renderMultipleChoice(container);
+        }
+    }
+
+    function renderMultipleChoice(container) {
+        const optContainer = document.createElement('div');
+        optContainer.className = 'options-container';
+        
+        const shuffled = shuffleArray([...currentQuestion.options]);
+        shuffled.forEach(optText => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optText;
+            btn.onclick = () => {
+                initAudio();
+                const isCorrect = (optText === currentQuestion.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else {
+                    btn.classList.add('incorrect');
+                    optContainer.querySelectorAll('.option-btn').forEach(b => {
+                        if(b.innerText === currentQuestion.correctAnswer) b.classList.add('correct');
+                    });
+                }
+                optContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+                processAnswer(isCorrect);
+            };
+            optContainer.appendChild(btn);
+        });
+        container.appendChild(optContainer);
+    }
+
+    function renderTrueFalse(container) {
+        const optContainer = document.createElement('div');
+        optContainer.className = 'options-container';
+        
+        ['True', 'False'].forEach(optText => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optText;
+            btn.onclick = () => {
+                initAudio();
+                let userVal = removeAccents(optText);
+                let correctVal = removeAccents(currentQuestion.correctAnswer);
+                
+                if (userVal === 'verdadero' || userVal === 'true' || userVal === 'v') userVal = 'true';
+                if (userVal === 'falso' || userVal === 'false' || userVal === 'f') userVal = 'false';
+                
+                if (correctVal === 'verdadero' || correctVal === 'true' || correctVal === 'v') correctVal = 'true';
+                if (correctVal === 'falso' || correctVal === 'false' || correctVal === 'f') correctVal = 'false';
+
+                const isCorrect = (userVal === correctVal);
+                
+                if (isCorrect) {
+                    btn.classList.add('correct');
+                } else {
+                    btn.classList.add('incorrect');
+                    optContainer.querySelectorAll('.option-btn').forEach(b => {
+                        let bVal = removeAccents(b.innerText);
+                        if (bVal === 'verdadero' || bVal === 'true') bVal = 'true';
+                        if (bVal === 'falso' || bVal === 'false') bVal = 'false';
+                        if(bVal === correctVal) b.classList.add('correct');
+                    });
+                }
+                optContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+                processAnswer(isCorrect);
+            };
+            optContainer.appendChild(btn);
+        });
+        container.appendChild(optContainer);
+    }
+
+    function renderFillBlanks(container) {
+        const qTextEl = document.getElementById('q-text');
+        
+        let rawQuestion = currentQuestion.question || "";
+        let formattedHTML = rawQuestion.replace(/\[\s*blank\s*\]/gi, '<input type="text" id="inline-blank-field" class="inline-blank-input" autocomplete="off">');
+        qTextEl.innerHTML = formattedHTML;
+
+        const btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.innerText = 'Enviar Respuesta ⚽';
+        
+        const handleSubmit = () => {
+            initAudio();
+            const inputField = document.getElementById('inline-blank-field');
+            if(!inputField || inputField.disabled) return;
+
+            const userAns = removeAccents(inputField.value);
+            const correctAns = removeAccents(currentQuestion.correctAnswer);
+            const isCorrect = (userAns === correctAns);
+            
+            inputField.disabled = true;
+            btn.disabled = true;
+            
+            if (isCorrect) {
+                inputField.style.borderColor = 'var(--correct)';
+                inputField.style.backgroundColor = 'rgba(16,185,129,0.2)';
+            } else {
+                inputField.style.borderColor = 'var(--incorrect)';
+                inputField.style.backgroundColor = 'rgba(239,68,68,0.2)';
+            }
+            
+            processAnswer(isCorrect);
+        };
+
+        btn.onclick = handleSubmit;
+        
+        setTimeout(() => {
+            const inp = document.getElementById('inline-blank-field');
+            if(inp) {
+                inp.focus();
+                inp.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleSubmit();
+                });
+            }
+        }, 100);
+        
+        container.appendChild(btn);
+    }
+
+    function renderMatching(container) {
+        const wrap = document.createElement('div');
+        wrap.className = 'matching-grid';
+        
+        const leftCol = document.createElement('div'); leftCol.className = 'match-col';
+        const rightCol = document.createElement('div'); rightCol.className = 'match-col';
+        
+        let pairs = [];
+        currentQuestion.options.forEach(opt => {
+            if(opt.includes('=')) {
+                let parts = opt.split('=');
+                pairs.push({ left: parts[0].trim(), right: parts[1].trim() });
+            }
+        });
+        
+        let leftItems = shuffleArray(pairs.map(p => p.left));
+        let rightItems = shuffleArray(pairs.map(p => p.right));
+        let matchesLeft = pairs.length;
+        
+        let selectedLeftBtn = null;
+        let selectedRightBtn = null;
+
+        function checkMatch() {
+            if (selectedLeftBtn && selectedRightBtn) {
+                initAudio();
+                const lText = selectedLeftBtn.innerText;
+                const rText = selectedRightBtn.innerText;
+                
+                const isMatch = pairs.some(p => p.left === lText && p.right === rText);
+                
+                if (isMatch) {
+                    playSound('correct');
+                    selectedLeftBtn.classList.replace('selected', 'matched');
+                    selectedRightBtn.classList.replace('selected', 'matched');
+                    selectedLeftBtn = null;
+                    selectedRightBtn = null;
+                    matchesLeft--;
+                    
+                    if (matchesLeft === 0) {
+                        setTimeout(() => processAnswer(true), 500);
+                    }
+                } else {
+                    playSound('incorrect');
+                    selectedLeftBtn.classList.add('error');
+                    selectedRightBtn.classList.add('error');
+                    
+                    setTimeout(() => {
+                        selectedLeftBtn.classList.remove('error', 'selected');
+                        selectedRightBtn.classList.remove('error', 'selected');
+                        selectedLeftBtn = null;
+                        selectedRightBtn = null;
+                    }, 400);
+                    
+                    const allBtns = wrap.querySelectorAll('.match-btn');
+                    allBtns.forEach(b => b.disabled = true);
+                    processAnswer(false);
+                }
+            }
+        }
+
+        leftItems.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'match-btn'; btn.innerText = text;
+            btn.onclick = () => {
+                initAudio();
+                if(btn.classList.contains('matched')) return;
+                if(selectedLeftBtn) selectedLeftBtn.classList.remove('selected');
+                selectedLeftBtn = btn;
+                btn.classList.add('selected');
+                checkMatch();
+            };
+            leftCol.appendChild(btn);
+        });
+
+        rightItems.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'match-btn'; btn.innerText = text;
+            btn.onclick = () => {
+                initAudio();
+                if(btn.classList.contains('matched')) return;
+                if(selectedRightBtn) selectedRightBtn.classList.remove('selected');
+                selectedRightBtn = btn;
+                btn.classList.add('selected');
+                checkMatch();
+            };
+            rightCol.appendChild(btn);
+        });
+
+        wrap.appendChild(leftCol);
+        wrap.appendChild(rightCol);
+        container.appendChild(wrap);
+    }
+
+    function processAnswer(isCorrect) {
+        const feedback = document.getElementById('feedback-panel');
+        const fTitle = document.getElementById('feedback-title');
+        const fExp = document.getElementById('feedback-explanation');
+        const q = currentQueue.shift(); 
+
+        if (gameMode === 'training') {
+            stats.attempts++;
+            if (isCorrect) {
+                sessionExp += 10;
+                userStats.exp += 10;
+                saveUserStats();
+                updateEgoBarUI();
+                playSound('correct');
+                stats.correct++;
+                fTitle.innerText = "⚽ ¡Golazo Mental!";
+                fTitle.style.color = "var(--correct)";
+                feedback.className = "feedback correct-bg";
+            } else {
+                playSound('incorrect');
+                fTitle.innerText = "🚩 ¡Fuera de Lugar!";
+                fTitle.style.color = "var(--incorrect)";
+                feedback.className = "feedback incorrect-bg";
+                currentQueue.push(q); 
+            }
+        } else {
+            tourneyStats.current++;
+            tourneyHistory.push({ subtopic: q.subtopic, isCorrect: isCorrect });
+            if (isCorrect) {
+                playSound('correct');
+                tourneyStats.correct++;
+                pendingEarnedExp += 10;
+                fTitle.innerText = "⚽ ¡Golazo!";
+                fTitle.style.color = "var(--correct)";
+                feedback.className = "feedback correct-bg";
+            } else {
+                playSound('incorrect');
+                tourneyStats.incorrect++;
+                fTitle.innerText = "🚩 ¡Fuera de Lugar!";
+                fTitle.style.color = "var(--incorrect)";
+                feedback.className = "feedback incorrect-bg";
+            }
+        }
+        
+        fExp.innerHTML = `<strong>Respuesta:</strong> <span style="color:var(--accent); font-weight:bold;">${q.correctAnswer}</span><br><strong>Explicación:</strong> ${q.explanation}`;
+        updateStats();
+        feedback.style.display = 'block';
+        feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    document.getElementById('next-btn').onclick = () => { initAudio(); loadNextQuestion(); };
+
+    // --- End State Handlers ---
+    function endTrainingModule() {
+        quizActive = false;
+        document.getElementById('sum-correct').innerText = stats.correct;
+        document.getElementById('sum-attempts').innerText = stats.attempts;
+        document.getElementById('sum-exp').innerText = `+${sessionExp} Exp`;
+        showScreen('summary');
+    }
+
+    // --- EPIC-07: Tournament Post-Match Analysis & Rewards ---
+    function endTournament(isTimeout) {
+        clearInterval(timerInterval);
+        quizActive = false;
+        
+        const titleEl = document.getElementById('tourney-result-title');
+        if (isTimeout) {
+            titleEl.innerText = "⏱️ ¡Tiempo Agotado!";
+            titleEl.style.color = "var(--incorrect)";
+        } else {
+            titleEl.innerText = "Fin del Partido ⚽";
+            titleEl.style.color = "var(--accent)";
+        }
+
+        const total = tourneyStats.total;
+        const correct = tourneyStats.correct;
+        const gradePercentage = total > 0 ? Math.round((correct / total) * 100) : 0;
+        
+        document.getElementById('tourney-grade').innerText = `${gradePercentage}%`;
+        document.getElementById('tourney-res-correct').innerText = correct;
+        document.getElementById('tourney-res-incorrect').innerText = tourneyStats.incorrect;
+        
+        const trophyIcon = document.getElementById('tourney-trophy-icon');
+        const trophyTitle = document.getElementById('tourney-trophy-title');
+        
+        trophyIcon.className = "trophy-icon";
+        trophyTitle.className = "trophy-title";
+
+        if (gradePercentage >= 90) {
+            trophyIcon.classList.add('trophy-gold');
+            trophyTitle.classList.add('trophy-gold');
+            trophyTitle.innerText = "Rango S: Oro";
+            pendingEarnedExp += 50; 
+        } else if (gradePercentage >= 80) {
+            trophyIcon.classList.add('trophy-silver');
+            trophyTitle.classList.add('trophy-silver');
+            trophyTitle.innerText = "Rango A: Plata";
+            pendingEarnedExp += 30; 
+        } else if (gradePercentage >= 70) {
+            trophyIcon.classList.add('trophy-bronze');
+            trophyTitle.classList.add('trophy-bronze');
+            trophyTitle.innerText = "Rango B: Bronce";
+            pendingEarnedExp += 10; 
+        } else {
+            trophyIcon.classList.add('trophy-none');
+            trophyTitle.classList.add('trophy-none');
+            trophyTitle.innerText = "Sigue Entrenando";
+        }
+        
+        document.getElementById('tourney-res-exp').innerText = `+${pendingEarnedExp}`;
+
+        // Fix de persistencia: Guardar inmediatamente la exp al terminar, sin esperar a cerrar la ventana
+        if (pendingEarnedExp > 0) {
+            userStats.exp += pendingEarnedExp;
+            saveUserStats();
+        }
+
+        renderSubtopicChart();
+        showScreen('tournament-results');
+    }
+
+    function renderSubtopicChart() {
+        const container = document.getElementById('tourney-chart');
+        container.innerHTML = '';
+
+        let groups = {};
+        tourneyHistory.forEach(r => {
+            const sub = r.subtopic || 'General';
+            if(!groups[sub]) groups[sub] = { total: 0, correct: 0, incorrect: 0 };
+            groups[sub].total++;
+            if(r.isCorrect) groups[sub].correct++;
+            else groups[sub].incorrect++;
+        });
+
+        Object.keys(groups).forEach(sub => {
+            const data = groups[sub];
+            const pCorrect = (data.correct / data.total) * 100;
+            const pIncorrect = (data.incorrect / data.total) * 100;
+
+            const row = document.createElement('div');
+            row.className = 'bar-row';
+            row.innerHTML = `
+                <div class="bar-label" title="${sub}">${sub}</div>
+                <div class="bar-track">
+                    <div class="bar-fill-correct" style="width: 0%;" data-target="${pCorrect}"></div>
+                    <div class="bar-fill-incorrect" style="width: 0%;" data-target="${pIncorrect}"></div>
+                    <div class="bar-val">${data.correct}✓ ${data.incorrect}✗</div>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+
+        setTimeout(() => {
+            document.querySelectorAll('.bar-fill-correct, .bar-fill-incorrect').forEach(bar => {
+                bar.style.width = bar.getAttribute('data-target') + '%';
+            });
+        }, 100);
+    }
+
+    // --- [BUGFIX-005 / Issue 2] Exp Animation Sequence ---
+    function closeTournamentResults() {
+        if (pendingEarnedExp > 0) {
+            triggerExpTransferSequence(pendingEarnedExp);
+        } else {
+            showScreen('dashboard');
+        }
+    }
+
+    function triggerExpTransferSequence(expAmount) {
+        initAudio(); 
+        
+        const flyEl = document.getElementById('exp-fly-element');
+        const targetEl = document.getElementById('exp-score');
+        
+        flyEl.innerText = `+${expAmount} Exp`;
+        flyEl.className = 'exp-fly-element exp-anim-phase1';
+        
+        setTimeout(() => {
+            const targetRect = targetEl.getBoundingClientRect();
+            
+            const startX = window.innerWidth / 2;
+            const startY = window.innerHeight / 2;
+            
+            const destX = targetRect.left + (targetRect.width / 2);
+            const destY = targetRect.top + (targetRect.height / 2);
+            
+            const moveX = destX - startX;
+            const moveY = destY - startY;
+
+            flyEl.classList.remove('exp-anim-phase1');
+            flyEl.classList.add('exp-anim-phase2');
+            
+            flyEl.style.transform = `translate(calc(-50% + ${moveX}px), calc(-50% + ${moveY}px)) scale(0.2)`;
+            flyEl.style.opacity = '0'; 
+            
+            setTimeout(() => {
+                flyEl.className = 'exp-fly-element';
+                flyEl.style.transform = 'translate(-50%, -50%) scale(0)';
+                flyEl.style.opacity = '0';
+                
+                animateExpCounter(expAmount);
+                showScreen('dashboard');
+                
+            }, 800); 
+            
+        }, 1200);
+    }
+
+    function animateExpCounter(expAmount) {
+        // Fix de persistencia visual: userStats.exp ya está guardado con la cantidad total
+        // Animamos visualmente desde (total - ganado) hasta (total)
+        let currentVisualExp = userStats.exp - expAmount; 
+        const targetExp = userStats.exp;
+        
+        const steps = Math.min(expAmount, 30);
+        const stepValue = Math.ceil(expAmount / steps);
+        
+        const interval = setInterval(() => {
+            currentVisualExp += stepValue;
+            if (currentVisualExp >= targetExp) {
+                currentVisualExp = targetExp;
+                clearInterval(interval);
+                
+                pendingEarnedExp = 0;
+                updateEgoBarUI(); // Actualizamos la UI final (rangos, etc)
+                playSound('correct'); 
+            }
+            
+            document.getElementById('exp-score').innerText = currentVisualExp;
+            playSound('tick');
+            
+        }, 50); 
+    }
+
+    // Startup
+    initApp();
+</script>
 </body>
 </html>
