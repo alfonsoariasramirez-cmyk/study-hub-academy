@@ -9,8 +9,7 @@ const APP_CONFIG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGi
 
 // Estado global de la aplicación
 let subjectsCatalog = [];
-let currentRawQuestions = []; // Almacena todo el banco de la materia para filtrar por módulo
-let currentQuestions = [];    // Preguntas activas del módulo seleccionado
+let currentQuestions = [];    // Preguntas activas de la materia seleccionada
 let currentQuestionIndex = 0;
 let score = 0;
 let activeQuizSubject = "";
@@ -27,9 +26,6 @@ let userStats = {
     lastLoginDate: ""
 };
 
-/**
- * Carga las estadísticas del usuario desde el almacenamiento local del navegador.
- */
 function loadUserStats() {
     console.log("Inicia loadUserStats");
     try {
@@ -44,9 +40,6 @@ function loadUserStats() {
     updateEgoBarUI();
 }
 
-/**
- * Valida y calcula la racha de días consecutivos de estudio del estudiante.
- */
 function checkStreak() {
     console.log("checkStreak");
     const today = new Date().toISOString().slice(0, 10);
@@ -62,18 +55,14 @@ function checkStreak() {
             userStats.streak++;
             userStats.lastLoginDate = today;
         } else if (diffDays > 1) {
-            userStats.streak = 1; // Racha interrumpida
+            userStats.streak = 1;
             userStats.lastLoginDate = today;
         }
     }
     saveUserStats();
 }
 
-/**
- * Persiste las estadísticas actuales en el localStorage del navegador.
- */
 function saveUserStats() {
-    console.log("saveUserStats");
     try {
         localStorage.setItem("study_hub_user_stats", JSON.stringify(userStats));
     } catch (e) {
@@ -81,9 +70,6 @@ function saveUserStats() {
     }
 }
 
-/**
- * Calcula el rango del estudiante basándose en sus Puntos de Experiencia (EP).
- */
 function updateEgoRank() {
     if (userStats.ep >= 100) userStats.rank = "Delantero Estrella ⭐";
     else if (userStats.ep >= 50) userStats.rank = "Titular Convictivo ⚽";
@@ -91,9 +77,6 @@ function updateEgoRank() {
     else userStats.rank = "Novato 🐣";
 }
 
-/**
- * Actualiza los elementos DOM de la barra superior con los valores de racha y EP.
- */
 function updateEgoBarUI() {
     updateEgoRank();
     const streakEl = document.getElementById("streak-count");
@@ -107,7 +90,7 @@ function updateEgoBarUI() {
 
 /**
  * ============================================================================
- * EFECTOS DE AUDIO (Web Audio API - Estilo Shonen / Tsubasa)
+ * EFECTOS DE AUDIO (Web Audio API - BUG-002)
  * ============================================================================
  */
 function playSound(isCorrect) {
@@ -119,7 +102,7 @@ function playSound(isCorrect) {
         const gain = ctx.createGain();
         
         osc.type = isCorrect ? 'triangle' : 'sawtooth';
-        osc.frequency.setValueAtTime(isCorrect ? 587.33 : 220, ctx.currentTime); // D5 para acierto, A3 para error
+        osc.frequency.setValueAtTime(isCorrect ? 587.33 : 220, ctx.currentTime);
         
         gain.gain.setValueAtTime(0.1, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
@@ -139,7 +122,6 @@ function playSound(isCorrect) {
  * MOTOR DE PARSEO CSV Y GESTIÓN DE VISTAS (CMS)
  * ============================================================================
  */
-
 function parseCSV(text) {
     let lines = [];
     let row = [""];
@@ -209,8 +191,7 @@ async function initApp() {
 }
 
 function showView(viewId) {
-    // Incluimos también la vista de módulos si existe en el DOM
-    ['loading-view', 'error-view', 'subjects-view', 'modules-view', 'quiz-view', 'results-view'].forEach(id => {
+    ['loading-view', 'error-view', 'subjects-view', 'quiz-view', 'results-view'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
     });
@@ -229,15 +210,15 @@ function renderSubjects() {
             <div class="subject-icon">${sub.icon}</div>
             <div class="subject-name">${sub.name}</div>
         `;
-        card.onclick = () => loadSubjectData(sub);
+        card.onclick = () => loadSubjectQuiz(sub);
         grid.appendChild(card);
     });
 }
 
 /**
- * Carga el banco de preguntas de la materia y procede a mostrar los módulos (categorías).
+ * [BUG-001 Solucionado] Carga directa de preguntas al hacer clic en la materia (flujo v1.7)
  */
-async function loadSubjectData(subject) {
+async function loadSubjectQuiz(subject) {
     activeQuizSubject = subject.name;
     showView('loading-view');
     try {
@@ -248,12 +229,11 @@ async function loadSubjectData(subject) {
         const csvText = await response.text();
         const rows = parseCSV(csvText);
         
-        currentRawQuestions = [];
+        currentQuestions = [];
+        // [BUG-003 Solucionado] Mapeo dinámico de opciones de respuesta
         for (let i = 1; i < rows.length; i++) {
             const r = rows[i];
-            // Mapeo flexible de columnas para soportar opción múltiple y otros reactivos
             if (r.length >= 6 && r[1].trim() !== "") {
-                // Extraer todas las opciones dinámicamente desde el índice 2 hasta antes de la respuesta correcta
                 let rawOptions = [];
                 for (let j = 2; j < r.length - 1; j++) {
                     if (r[j] && r[j].trim() !== "") {
@@ -261,7 +241,7 @@ async function loadSubjectData(subject) {
                     }
                 }
 
-                currentRawQuestions.push({
+                currentQuestions.push({
                     category: r[0].trim(),
                     question: r[1].trim(),
                     options: rawOptions,
@@ -270,13 +250,22 @@ async function loadSubjectData(subject) {
             }
         }
 
-        if (currentRawQuestions.length === 0) {
+        if (currentQuestions.length === 0) {
             alert("Esta materia no tiene preguntas configuradas.");
             showSubjectsView();
             return;
         }
 
-        renderModules(subject.name);
+        // Barajar preguntas aleatoriamente
+        currentQuestions.sort(() => Math.random() - 0.5);
+        currentQuestionIndex = 0;
+        score = 0;
+
+        const titleEl = document.getElementById("quiz-subject-title");
+        if (titleEl) titleEl.innerText = subject.name;
+
+        showView('quiz-view');
+        renderQuestion();
     } catch (err) {
         console.error(err);
         alert("Error al cargar las preguntas de la materia.");
@@ -284,64 +273,6 @@ async function loadSubjectData(subject) {
     }
 }
 
-/**
- * Renderiza la pantalla de selección de Módulos (Categorías) específicos de la materia.
- */
-function renderModules(subjectName) {
-    // Si no existe una vista específica en el HTML, la creamos o utilizamos subjects-view como contenedor de módulos
-    let modulesView = document.getElementById("modules-view");
-    if (!modulesView) {
-        // Fallback dinámico si el contenedor no está declarado en el HTML
-        modulesView = document.createElement("div");
-        modulesView.id = "modules-view";
-        modulesView.className = "hidden p-4";
-        document.body.appendChild(modulesView);
-    }
-
-    const categories = [...new Set(currentRawQuestions.map(q => q.category || "Módulo General"))];
-
-    let html = `
-        <div class="max-w-4xl mx-auto text-center py-6">
-            <button onclick="showSubjectsView()" class="mb-4 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">⬅ Volver a Materias</button>
-            <h2 class="text-2xl font-black text-cyan-400 mb-2">${subjectName}</h2>
-            <p class="text-gray-300 mb-6">Selecciona un módulo de entrenamiento táctico:</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-    `;
-
-    categories.forEach(cat => {
-        const count = currentRawQuestions.filter(q => q.category === cat).length;
-        html += `
-            <div onclick="startModuleQuiz('${cat}')" class="p-5 bg-slate-800/90 border border-cyan-500/40 rounded-xl cursor-pointer hover:bg-slate-700 hover:border-cyan-400 transition shadow-lg">
-                <h3 class="font-bold text-lg text-white mb-1">📌 ${cat}</h3>
-                <p class="text-sm text-cyan-300">${count} reactivos disponibles</p>
-            </div>
-        `;
-    });
-
-    html += `</div></div>`;
-    modulesView.innerHTML = html;
-    showView('modules-view');
-}
-
-/**
- * Inicia el cuestionario filtrando por el módulo seleccionado.
- */
-function startModuleQuiz(category) {
-    currentQuestions = currentRawQuestions.filter(q => q.category === category);
-    currentQuestions.sort(() => Math.random() - 0.5); // Shuffle
-    currentQuestionIndex = 0;
-    score = 0;
-
-    const titleEl = document.getElementById("quiz-subject-title");
-    if (titleEl) titleEl.innerText = `${activeQuizSubject} - ${category}`;
-    
-    showView('quiz-view');
-    renderQuestion();
-}
-
-/**
- * Renderiza la pregunta actual y sus opciones con orden aleatorio y soporte completo de reactivos.
- */
 function renderQuestion() {
     if (currentQuestionIndex >= currentQuestions.length || currentQuestionIndex >= 10) {
         showResults();
@@ -359,39 +290,32 @@ function renderQuestion() {
     if (!optionsContainer) return;
     optionsContainer.innerHTML = "";
 
-    // Asegurar que existan opciones para renderizar (evita celdas vacías)
     if (!q.options || q.options.length === 0) {
-        optionsContainer.innerHTML = `<p class="text-yellow-400">Esta pregunta no contiene opciones válidas en el CSV.</p>`;
+        optionsContainer.innerHTML = `<p style="color: var(--accent-yellow);">Esta pregunta no contiene opciones válidas.</p>`;
         return;
     }
 
-    // Barajar opciones de respuesta de forma aleatoria
+    // Barajar opciones
     let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
 
     shuffledOptions.forEach(opt => {
         const btn = document.createElement("button");
-        btn.className = "option-btn w-full text-left p-3 my-2 bg-slate-800 hover:bg-cyan-900 border border-slate-700 rounded-lg transition text-white font-medium";
+        btn.className = "option-btn";
         btn.innerText = opt;
         btn.onclick = () => selectAnswer(opt, q.correctAnswer, btn);
         optionsContainer.appendChild(btn);
     });
 }
 
-/**
- * Valida la respuesta seleccionada, reproduce audio y normaliza comparación de textos.
- */
 function selectAnswer(selected, correct, btnElement) {
     const buttons = document.querySelectorAll(".option-btn");
     buttons.forEach(b => b.onclick = null); // Deshabilitar clics múltiples
 
-    // Normalización de acentos y mayúsculas para comparación robusta
     const cleanSelected = selected.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     const cleanCorrect = correct.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 
     const isCorrect = (cleanSelected === cleanCorrect);
-
-    // Reproducir sonido sintetizado (Acierto o Error)
-    playSound(isCorrect);
+    playSound(isCorrect); // [BUG-002 Solucionado] Feedback auditivo Web Audio API
 
     if (isCorrect) {
         btnElement.classList.add("correct");
@@ -404,23 +328,19 @@ function selectAnswer(selected, correct, btnElement) {
         });
     }
 
-    // Transición automática a la siguiente pregunta tras 1.2 segundos
     setTimeout(() => {
         currentQuestionIndex++;
         renderQuestion();
     }, 1200);
 }
 
-/**
- * Muestra la pantalla de resultados y procesa la recompensa de Puntos de Experiencia [EPIC-06].
- */
 function showResults() {
     showView('results-view');
     const total = Math.min(10, currentQuestions.length);
     const scoreEl = document.getElementById("final-score");
     if (scoreEl) scoreEl.innerText = `${score} / ${total}`;
     
-    // Otorgar 5 puntos EP por cada acierto obtenido
+    // Otorgar 5 puntos EP por cada acierto [EPIC-06]
     const earnedEP = score * 5;
     userStats.ep += earnedEP;
     saveUserStats();
@@ -433,21 +353,14 @@ function showResults() {
     if (feedbackEl) feedbackEl.innerText = feedback;
 }
 
-/**
- * Modal de confirmación para prevenir la pérdida involuntaria de sesión (TASK-503).
- */
 function confirmLeaveQuiz() {
     if (confirm("¿Estás seguro de salir? Perderás tu progreso actual.")) {
         showSubjectsView();
     }
 }
 
-/**
- * Regresa a la vista principal de selección de materias.
- */
 function showSubjectsView() {
     showView('subjects-view');
 }
 
-// Inicialización automática al cargar la ventana
 window.onload = initApp;
