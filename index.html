@@ -38,10 +38,12 @@
     </div>
 
     <div id="quiz" class="screen">
-        <div class="stats-bar">
-            <span>Intentos de Gol: <span id="attempts-count" class="stat-badge">0</span></span>
+        <!-- [EPIC-07] Stats bar ajustada para incluir el temporizador -->
+        <div class="stats-bar" style="flex-wrap: wrap; gap: 10px;">
+            <span>Intentos: <span id="attempts-count" class="stat-badge">0</span></span>
             <span>Aciertos: <span id="correct-count" class="stat-badge">0</span></span>
-            <span>Retos en Cancha: <span id="queue-count" class="stat-badge">0</span></span>
+            <span>Restantes: <span id="queue-count" class="stat-badge">0</span></span>
+            <span id="timer-badge" class="stat-badge" style="border-color: var(--accent); min-width: 80px; text-align: center;">⏱️ <span id="time-left">05:00</span></span>
         </div>
         
         <span id="q-difficulty" class="difficulty-badge diff-Easy">Fácil</span>
@@ -57,7 +59,7 @@
     </div>
 
     <div id="summary" class="screen">
-        <h2 style="justify-content: center;" class="shonen-font">¡Entrenamiento Superado! 🎉</h2>
+        <h2 id="summary-title" style="justify-content: center;" class="shonen-font">¡Entrenamiento Superado! 🎉</h2>
         <div class="summary-stats">
             <p>Retos Dominados: <br><span class="big-number" id="sum-correct">0</span></p>
             <p style="margin-top: 15px;">Intentos Totales: <br><span class="big-number" id="sum-attempts" style="color: var(--primary);">0</span></p>

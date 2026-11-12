@@ -9,6 +9,64 @@ let currentSubjectName = '';
 let quizActive = false;
 
 /* ==========================================================================
+   [EPIC-07] TEMPORIZADOR (MODO SIMULADOR DE EXAMEN)
+   ========================================================================== */
+let timerInterval = null;
+let timeLeft = 300; // 5 Minutos (300 segundos) por módulo
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeLeft = 300; 
+    updateTimerUI();
+    
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerUI();
+        
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            forceTimeout();
+        }
+    }, 1000);
+}
+
+function updateTimerUI() {
+    const timeEl = document.getElementById('time-left');
+    const badgeEl = document.getElementById('timer-badge');
+    
+    if (!timeEl) return;
+    
+    const min = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const sec = (timeLeft % 60).toString().padStart(2, '0');
+    timeEl.innerText = `${min}:${sec}`;
+    
+    // Tensión al bajar de 60 segundos
+    if (timeLeft <= 60 && badgeEl) {
+        badgeEl.classList.add('timer-warning');
+    } else if (badgeEl) {
+        badgeEl.classList.remove('timer-warning');
+    }
+}
+
+function forceTimeout() {
+    quizActive = false;
+    document.getElementById('feedback-panel').style.display = 'none';
+    playSound('incorrect'); // Alarma auditiva
+    
+    document.getElementById('sum-correct').innerText = stats.correct;
+    document.getElementById('sum-attempts').innerText = stats.attempts;
+    document.getElementById('sum-exp').innerText = `+${sessionExp} Exp`;
+    
+    const summaryTitle = document.getElementById('summary-title');
+    if (summaryTitle) {
+        summaryTitle.innerText = "⏱️ ¡Tiempo Agotado!";
+        summaryTitle.style.color = "var(--incorrect)";
+    }
+    
+    showScreen('summary');
+}
+
+/* ==========================================================================
    [EPIC-06] SISTEMA DE GAMIFICACIÓN, RACHAS Y PUNTOS DE EXPERIENCIA (LOCALSTORAGE)
    ========================================================================== */
 let userStats = { streak: 0, exp: 0, rank: "Novato", lastLoginDate: "" };
@@ -131,16 +189,18 @@ function showScreen(id) {
 function confirmChangeSubject() {
     if (quizActive && currentQueue.length > 0) {
         if (confirm("⚠️ ¿Estás seguro de salir? Perderás el progreso de tu entrenamiento actual en la cancha.")) {
+            clearInterval(timerInterval); // Limpia el temporizador al salir
             quizActive = false;
             showScreen('subject-select');
         }
     } else {
+        clearInterval(timerInterval);
         showScreen('subject-select');
     }
 }
 
 async function initApp() {
-    loadUserStats(); // Inicializa Gamificación
+    loadUserStats(); 
     try {
         const cacheBusterUrl = CONFIG_CSV_URL + '&t=' + Date.now();
         const response = await fetch(cacheBusterUrl);
@@ -267,9 +327,11 @@ function startModule(category) {
     initAudio(); 
     currentQueue = shuffleArray(JSON.parse(JSON.stringify(modulesData[category])));
     stats = { correct: 0, attempts: 0 };
-    sessionExp = 0; // Resetea los puntos a ganar por módulo
+    sessionExp = 0; 
     showScreen('quiz');
+    
     loadNextQuestion();
+    startTimer(); // Inicializa el temporizador [EPIC-07]
 }
 
 function updateStats() {
@@ -524,7 +586,6 @@ function processAnswer(isCorrect) {
     const fExp = document.getElementById('feedback-explanation');
 
     if (isCorrect) {
-        // [EPIC-06] Otorga 10 Exp por acierto, actualiza interfaz y localstorage
         sessionExp += 10;
         userStats.exp += 10;
         saveUserStats();
@@ -556,10 +617,19 @@ function processAnswer(isCorrect) {
 document.getElementById('next-btn').onclick = () => { initAudio(); loadNextQuestion(); };
 
 function endModule() {
+    clearInterval(timerInterval); // Limpia el temporizador al terminar exitosamente
     quizActive = false;
     document.getElementById('sum-correct').innerText = stats.correct;
     document.getElementById('sum-attempts').innerText = stats.attempts;
-    document.getElementById('sum-exp').innerText = `+${sessionExp} Exp`; // Muestra los Exp ganados en este módulo
+    document.getElementById('sum-exp').innerText = `+${sessionExp} Exp`;
+    
+    // Restablece el título del resumen por si se forzó por Timeout
+    const summaryTitle = document.getElementById('summary-title');
+    if (summaryTitle) {
+        summaryTitle.innerText = "¡Entrenamiento Superado! 🎉";
+        summaryTitle.style.color = "var(--text-main)";
+    }
+    
     showScreen('summary');
 }
 
