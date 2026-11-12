@@ -24,6 +24,15 @@
         </div>
     </header>
 
+    <!-- Vista de Módulos / Categorías de la Materia -->
+        <div id="modules-view" class="hidden">
+            <div class="quiz-header">
+                <span id="modules-subject-title" style="font-weight: 700; color: var(--accent-blue);">MATEMÁTICAS</span>
+                <button class="btn" style="margin-top: 0; padding: 6px 12px; font-size: 0.8rem; background: var(--border-color);" onclick="showSubjectsView()">← Cambiar Materia</button>
+            </div>
+            <div id="modules-grid" class="subjects-grid"></div>
+        </div>
+        
     <div class="container">
         <!-- Vista 1: Indicador de Carga Inicial de Recursos -->
         <div id="loading-view" class="loading">

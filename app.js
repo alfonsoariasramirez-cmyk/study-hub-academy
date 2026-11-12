@@ -363,4 +363,95 @@ function showSubjectsView() {
     showView('subjects-view');
 }
 
+/**
+ * Carga el banco de preguntas y muestra los módulos basados en la columna "Category" (BUG-001)
+ */
+async function loadSubjectData(subject) {
+    activeQuizSubject = subject.name;
+    showView('loading-view');
+    try {
+        const cacheBuster = `&_t=${new Date().getTime()}`;
+        const response = await fetch(subject.url + cacheBuster);
+        if (!response.ok) throw new Error("No se pudo cargar el banco de preguntas.");
+        
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+        
+        currentRawQuestions = [];
+        for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            if (r.length >= 6 && r[1].trim() !== "") {
+                let rawOptions = [];
+                for (let j = 2; j < r.length - 1; j++) {
+                    if (r[j] && r[j].trim() !== "") {
+                        rawOptions.push(r[j].trim());
+                    }
+                }
+
+                currentRawQuestions.push({
+                    category: r[0].trim(),
+                    question: r[1].trim(),
+                    options: rawOptions,
+                    correctAnswer: r[r.length - 1].trim()
+                });
+            }
+        }
+
+        if (currentRawQuestions.length === 0) {
+            alert("Esta materia no tiene preguntas configuradas.");
+            showSubjectsView();
+            return;
+        }
+
+        renderModules(subject.name);
+    } catch (err) {
+        console.error(err);
+        alert("Error al cargar las preguntas de la materia.");
+        showSubjectsView();
+    }
+}
+
+/**
+ * Renderiza dinámicamente una tarjeta por cada valor único de 'Category'
+ */
+function renderModules(subjectName) {
+    const titleEl = document.getElementById("modules-subject-title");
+    if (titleEl) titleEl.innerText = subjectName.toUpperCase();
+
+    const grid = document.getElementById("modules-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    // Extraer categorías únicas del CSV
+    const categories = [...new Set(currentRawQuestions.map(q => q.category))];
+
+    categories.forEach(cat => {
+        const card = document.createElement("div");
+        card.className = "subject-card";
+        card.innerHTML = `
+            <div class="subject-name" style="font-size: 1.05rem; line-height: 1.4;">${cat}</div>
+        `;
+        card.onclick = () => startModuleQuiz(cat);
+        grid.appendChild(card);
+    });
+
+    showView('modules-view');
+}
+
+/**
+ * Filtra las preguntas por el módulo seleccionado e inicia el cuestionario
+ */
+function startModuleQuiz(category) {
+    currentQuestions = currentRawQuestions.filter(q => q.category === category);
+    currentQuestions.sort(() => Math.random() - 0.5); // Barajar
+    currentQuestionIndex = 0;
+    score = 0;
+
+    const titleEl = document.getElementById("quiz-subject-title");
+    if (titleEl) titleEl.innerText = `${activeQuizSubject} - ${category}`;
+    
+    showView('quiz-view');
+    renderQuestion();
+}
+
 window.onload = initApp;
