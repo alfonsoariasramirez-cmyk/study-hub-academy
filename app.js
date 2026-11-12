@@ -1,225 +1,501 @@
-    // URL de publicación CSV del AppConfig oficial (v1.4 - v1.7)
-    const APP_CONFIG_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGizzNKU8G5AAHx0B7X929ljOcclcnx7enTgDLixnaJ3Xn61buqcb8BkRGTt16qIUjQQKFIJch/pub?gid=112265702&single=true&output=csv";
+        const CONFIG_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRGBmoGizzNKU8G5AAHx0B7X929ljOcclcnx7enTgDLixnaJ3Xn61buqcb8BkRGTt16qIUjQQKFIJch/pub?gid=112265702&single=true&output=csv';
 
-    let subjectsCatalog = [];
-    let currentQuestions = [];
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let activeQuizSubject = "";
+    let SUBJECT_CATALOG = [];
+    let modulesData = {}; 
+    let currentQueue = [];
+    let currentQuestion = null;
+    let stats = { correct: 0, attempts: 0 };
+    let currentSubjectName = '';
+    let quizActive = false;
 
-    // Motor robusto de parseo CSV compatible con comillas y comas internas
-    function parseCSV(text) {
-        let lines = [];
-        let row = [""];
-        let insideQuotes = false;
-        
-        for (let i = 0; i < text.length; i++) {
-            let c = text[i];
-            let nextC = text[i + 1];
-            
-            if (c === '"' && insideQuotes && nextC === '"') {
-                row[row.length - 1] += '"';
-                i++;
-            } else if (c === '"') {
-                insideQuotes = !insideQuotes;
-            } else if (c === ',' && !insideQuotes) {
-                row.push("");
-            } else if ((c === '\r' || c === '\n') && !insideQuotes) {
-                if (c === '\r' && nextC === '\n') { i++; }
-                lines.push(row);
-                row = [""];
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+
+    function playSound(type) {
+        try {
+            initAudio();
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(1000, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
             } else {
-                row[row.length - 1] += c;
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(250, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.25);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
             }
+        } catch (e) { console.log("Audio error:", e); }
+    }
+
+    function parseCSV(text) {
+        let result = [], row = [], cell = '', insideQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i], nextChar = text[i + 1];
+            if (char === '"' && insideQuotes && nextChar === '"') { cell += '"'; i++; }
+            else if (char === '"') { insideQuotes = !insideQuotes; }
+            else if (char === ',' && !insideQuotes) { row.push(cell.trim()); cell = ''; }
+            else if ((char === '\n' || char === '\r') && !insideQuotes) {
+                if (char === '\r' && nextChar === '\n') i++; 
+                row.push(cell.trim());
+                if(row.join('') !== '') result.push(row);
+                row = []; cell = '';
+            } else { cell += char; }
         }
-        if (row.length > 1 || row[0] !== "") {
-            lines.push(row);
+        if (cell || row.length > 0) { row.push(cell.trim()); result.push(row); }
+        return result;
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        quizActive = (id === 'quiz');
+    }
+
+    function confirmChangeSubject() {
+        if (quizActive && currentQueue.length > 0) {
+            if (confirm("⚠️ ¿Estás seguro de salir? Perderás el progreso de tu entrenamiento actual en la cancha.")) {
+                quizActive = false;
+                showScreen('subject-select');
+            }
+        } else {
+            showScreen('subject-select');
         }
-        return lines;
     }
 
     async function initApp() {
-        showView('loading-view');
         try {
-            // Control de caché con timestamp dinámico (TASK-504)
-            const cacheBuster = `&_t=${new Date().getTime()}`;
-            const response = await fetch(APP_CONFIG_URL + cacheBuster);
+            const cacheBusterUrl = CONFIG_CSV_URL + '&t=' + Date.now();
+            const response = await fetch(cacheBusterUrl);
             if (!response.ok) throw new Error("Error HTTP: " + response.status);
             
             const csvText = await response.text();
-            const rows = parseCSV(csvText);
+            const data = parseCSV(csvText);
             
-            subjectsCatalog = [];
-            // Omitir cabecera (fila 0)
-            for (let i = 1; i < rows.length; i++) {
-                const r = rows[i];
-                if (r.length >= 5 && r[0].trim() === "Subject") {
-                    subjectsCatalog.push({
-                        key: r[1].trim(),
-                        name: r[2].trim(),
-                        icon: r[3].trim(),
-                        url: r[4].trim()
-                    });
-                } else if (r.length >= 3 && r[0].trim() === "Setting" && r[1].trim() === "AppTitle") {
-                    document.getElementById("app-title").innerText = r[2].trim();
+            SUBJECT_CATALOG = [];
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (row.length < 3) continue;
+                if (row[0] === 'Setting' && row[1] === 'AppTitle') {
+                    document.getElementById('app-title').innerText = '⚽ ' + row[2].replace('v1.0', 'v1.7');
+                } else if (row[0] === 'Subject') {
+                    SUBJECT_CATALOG.push({ id: row[1], name: row[2], icon: row[3], url: row[4] });
                 }
             }
-
-            if (subjectsCatalog.length === 0) {
-                throw new Error("No se encontraron materias en el archivo de configuración.");
-            }
-
             renderSubjects();
-            showView('subjects-view');
-        } catch (err) {
-            console.error("Fallo de red o parseo:", err);
-            showView('error-view');
+        } catch (error) {
+            document.getElementById('loader').innerHTML = `
+                ❌ Error de conexión con la Academia.<br><br>
+                <button class="action-btn" style="width: auto; background: var(--accent); color: #090d16;" onclick="initApp()">🔄 Reintentar Conexión</button>`;
         }
-    }
-
-    function showView(viewId) {
-        ['loading-view', 'error-view', 'subjects-view', 'quiz-view', 'results-view'].forEach(id => {
-            document.getElementById(id).classList.add('hidden');
-        });
-        document.getElementById(viewId).classList.remove('hidden');
     }
 
     function renderSubjects() {
-        const grid = document.getElementById("subjects-grid");
-        grid.innerHTML = "";
-        subjectsCatalog.forEach(sub => {
-            const card = document.createElement("div");
-            card.className = "subject-card";
-            card.innerHTML = `
-                <div class="subject-icon">${sub.icon}</div>
-                <div class="subject-name">${sub.name}</div>
-            `;
-            card.onclick = () => loadSubjectQuiz(sub);
-            grid.appendChild(card);
+        const grid = document.getElementById('subject-grid');
+        grid.innerHTML = '';
+        SUBJECT_CATALOG.forEach(subject => {
+            const btn = document.createElement('button');
+            btn.className = 'card-btn subject-card';
+            btn.innerHTML = `<span class="card-icon">${subject.icon}</span> <span>${subject.name}</span>`;
+            btn.onclick = () => { initAudio(); loadSubjectData(subject.url, subject.name); };
+            grid.appendChild(btn);
         });
+        showScreen('subject-select');
     }
 
-    async function loadSubjectQuiz(subject) {
-        activeQuizSubject = subject.name;
-        showView('loading-view');
-        try {
-            const cacheBuster = `&_t=${new Date().getTime()}`;
-            const response = await fetch(subject.url + cacheBuster);
-            if (!response.ok) throw new Error("No se pudo cargar el banco de preguntas.");
-            
-            const csvText = await response.text();
-            const rows = parseCSV(csvText);
-            
-            currentQuestions = [];
-            // Formato esperado: Category,Question,Option A,Option B,Option C,Correct Answer,Explanation,Difficulty,Activity_Type
-            for (let i = 1; i < rows.length; i++) {
-                const r = rows[i];
-                if (r.length >= 6 && r[1].trim() !== "") {
-                    currentQuestions.push({
-                        category: r[0].trim(),
-                        question: r[1].trim(),
-                        options: [r[2].trim(), r[3].trim(), r[4].trim()].filter(opt => opt !== ""),
-                        correctAnswer: r[5].trim()
-                    });
-                }
-            }
+    async function loadSubjectData(csvUrl, subjectName) {
+        currentSubjectName = subjectName;
+        document.getElementById('loader-text').innerText = `Cargando datos de ${subjectName}...`;
+        showScreen('loader');
+        modulesData = {}; 
 
-            if (currentQuestions.length === 0) {
-                alert("Esta materia aún no tiene preguntas configuradas.");
-                showSubjectsView();
-                return;
-            }
-
-            // Barajar preguntas aleatoriamente
-            currentQuestions.sort(() => Math.random() - 0.5);
-            currentQuestionIndex = 0;
-            score = 0;
-
-            document.getElementById("quiz-subject-title").innerText = subject.name;
-            showView('quiz-view');
-            renderQuestion();
-        } catch (err) {
-            console.error(err);
-            alert("Error al cargar las preguntas de la materia.");
-            showSubjectsView();
-        }
-    }
-
-    function renderQuestion() {
-        if (currentQuestionIndex >= currentQuestions.length || currentQuestionIndex >= 10) {
-            showResults();
+        if (!csvUrl) {
+            document.getElementById('loader').innerHTML = '❌ URL no configurada para ' + subjectName;
             return;
         }
 
-        const q = currentQuestions[currentQuestionIndex];
-        document.getElementById("question-progress").innerText = `Pregunta ${currentQuestionIndex + 1} de ${Math.min(10, currentQuestions.length)}`;
-        document.getElementById("question-container").innerText = q.question;
+        try {
+            const cacheBusterUrl = csvUrl + (csvUrl.includes('?') ? '&' : '?') + 't=' + Date.now();
+            const response = await fetch(cacheBusterUrl);
+            if (!response.ok) throw new Error("Fallo de red");
 
-        const optionsContainer = document.getElementById("options-container");
-        optionsContainer.innerHTML = "";
+            const csvText = await response.text();
+            const data = parseCSV(csvText);
+            
+            let hasData = false;
+            for (let i = 1; i < data.length; i++) {
+                const row = data[i];
+                if (row.length < 8 || !row[0]) continue; 
+                hasData = true;
+                
+                const category = row[0];
+                const activityType = row[8] ? row[8].trim().toLowerCase() : 'multiple_choice';
 
-        // Barajar opciones
-        let shuffledOptions = [...q.options].sort(() => Math.random() - 0.5);
+                const qObj = {
+                    question: row[1],
+                    options: [row[2], row[3], row[4]].filter(Boolean),
+                    correctAnswer: row[5],
+                    explanation: row[6],
+                    difficulty: row[7],
+                    type: activityType
+                };
 
-        shuffledOptions.forEach(opt => {
-            const btn = document.createElement("button");
-            btn.className = "option-btn";
-            btn.innerText = opt;
-            btn.onclick = () => selectAnswer(opt, q.correctAnswer, btn);
-            optionsContainer.appendChild(btn);
+                if (!modulesData[category]) modulesData[category] = [];
+                modulesData[category].push(qObj);
+            }
+
+            if (!hasData) {
+                document.getElementById('loader').innerHTML = `
+                    <div style="font-size: 3rem; margin-bottom:10px;">📋</div>
+                    No hay datos en ${subjectName}.<br><br>
+                    <button class="action-btn back-btn" onclick="showScreen('subject-select')">Volver</button>`;
+            } else {
+                renderDashboard();
+            }
+        } catch (error) {
+            document.getElementById('loader').innerHTML = `
+                ❌ Error al cargar ${subjectName}.<br><br>
+                <button class="action-btn" style="width: auto; background: var(--accent); color: #090d16;" onclick="loadSubjectData('${csvUrl}', '${subjectName}')">🔄 Reintentar</button>`;
+        }
+    }
+
+    function renderDashboard() {
+        document.getElementById('current-subject-title').innerText = `${currentSubjectName}`;
+        const grid = document.getElementById('module-grid');
+        grid.innerHTML = '';
+        
+        Object.keys(modulesData).forEach(category => {
+            const card = document.createElement('button');
+            card.className = 'card-btn';
+            card.innerText = category;
+            card.onclick = () => { initAudio(); startModule(category); };
+            grid.appendChild(card);
         });
+        showScreen('dashboard');
     }
 
-    function selectAnswer(selected, correct, btnElement) {
-        // Deshabilitar botones para evitar doble clic
-        const buttons = document.querySelectorAll(".option-btn");
-        buttons.forEach(b => b.onclick = null);
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
 
-        // Normalización para comparar respuestas sin tildes o mayúsculas (TASK-201)
-        const cleanSelected = selected.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-        const cleanCorrect = correct.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    function removeAccents(str) {
+        return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+    }
 
-        if (cleanSelected === cleanCorrect) {
-            btnElement.classList.add("correct");
-            score++;
+    function startModule(category) {
+        initAudio(); 
+        currentQueue = shuffleArray(JSON.parse(JSON.stringify(modulesData[category])));
+        stats = { correct: 0, attempts: 0 };
+        showScreen('quiz');
+        loadNextQuestion();
+    }
+
+    function updateStats() {
+        document.getElementById('attempts-count').innerText = stats.attempts;
+        document.getElementById('correct-count').innerText = stats.correct;
+        document.getElementById('queue-count').innerText = currentQueue.length;
+    }
+
+    function loadNextQuestion() {
+        if (currentQueue.length === 0) return endModule();
+        
+        currentQuestion = currentQueue[0];
+        updateStats();
+
+        const diffEl = document.getElementById('q-difficulty');
+        diffEl.innerText = currentQuestion.difficulty;
+        diffEl.className = `difficulty-badge diff-${currentQuestion.difficulty}`;
+        
+        document.getElementById('q-text').innerHTML = '';
+        document.getElementById('feedback-panel').style.display = 'none';
+
+        const container = document.getElementById('activity-container');
+        container.innerHTML = '';
+
+        if (currentQuestion.type === 'true_false') {
+            document.getElementById('q-text').innerText = currentQuestion.question;
+            renderTrueFalse(container);
+        } else if (currentQuestion.type === 'fill_blanks') {
+            renderFillBlanks(container);
+        } else if (currentQuestion.type === 'matching') {
+            document.getElementById('q-text').innerText = currentQuestion.question;
+            renderMatching(container);
         } else {
-            btnElement.classList.add("incorrect");
-            buttons.forEach(b => {
-                const cleanB = b.innerText.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-                if (cleanB === cleanCorrect) {
-                    b.classList.add("correct");
+            document.getElementById('q-text').innerText = currentQuestion.question;
+            renderMultipleChoice(container);
+        }
+    }
+
+    function renderMultipleChoice(container) {
+        const optContainer = document.createElement('div');
+        optContainer.className = 'options-container';
+        
+        const shuffled = shuffleArray([...currentQuestion.options]);
+        shuffled.forEach(optText => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optText;
+            btn.onclick = () => {
+                initAudio();
+                const isCorrect = (optText === currentQuestion.correctAnswer);
+                if (isCorrect) btn.classList.add('correct');
+                else {
+                    btn.classList.add('incorrect');
+                    optContainer.querySelectorAll('.option-btn').forEach(b => {
+                        if(b.innerText === currentQuestion.correctAnswer) b.classList.add('correct');
+                    });
                 }
-            });
-        }
+                optContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+                processAnswer(isCorrect);
+            };
+            optContainer.appendChild(btn);
+        });
+        container.appendChild(optContainer);
+    }
 
+    function renderTrueFalse(container) {
+        const optContainer = document.createElement('div');
+        optContainer.className = 'options-container';
+        
+        ['True', 'False'].forEach(optText => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = optText;
+            btn.onclick = () => {
+                initAudio();
+                let userVal = removeAccents(optText);
+                let correctVal = removeAccents(currentQuestion.correctAnswer);
+                
+                if (userVal === 'verdadero' || userVal === 'true' || userVal === 'v') userVal = 'true';
+                if (userVal === 'falso' || userVal === 'false' || userVal === 'f') userVal = 'false';
+                
+                if (correctVal === 'verdadero' || correctVal === 'true' || correctVal === 'v') correctVal = 'true';
+                if (correctVal === 'falso' || correctVal === 'false' || correctVal === 'f') correctVal = 'false';
+
+                const isCorrect = (userVal === correctVal);
+                
+                if (isCorrect) {
+                    btn.classList.add('correct');
+                } else {
+                    btn.classList.add('incorrect');
+                    optContainer.querySelectorAll('.option-btn').forEach(b => {
+                        let bVal = removeAccents(b.innerText);
+                        if (bVal === 'verdadero' || bVal === 'true') bVal = 'true';
+                        if (bVal === 'falso' || bVal === 'false') bVal = 'false';
+                        if(bVal === correctVal) b.classList.add('correct');
+                    });
+                }
+                optContainer.querySelectorAll('button').forEach(b => b.disabled = true);
+                processAnswer(isCorrect);
+            };
+            optContainer.appendChild(btn);
+        });
+        container.appendChild(optContainer);
+    }
+
+    function renderFillBlanks(container) {
+        const qTextEl = document.getElementById('q-text');
+        
+        let rawQuestion = currentQuestion.question || "";
+        let formattedHTML = rawQuestion.replace(/\[\s*blank\s*\]/gi, '<input type="text" id="inline-blank-field" class="inline-blank-input" autocomplete="off">');
+        qTextEl.innerHTML = formattedHTML;
+
+        const btn = document.createElement('button');
+        btn.className = 'action-btn';
+        btn.innerText = 'Enviar Respuesta ⚽';
+        
+        const handleSubmit = () => {
+            initAudio();
+            const inputField = document.getElementById('inline-blank-field');
+            if(!inputField || inputField.disabled) return;
+
+            const userAns = removeAccents(inputField.value);
+            const correctAns = removeAccents(currentQuestion.correctAnswer);
+            const isCorrect = (userAns === correctAns);
+            
+            inputField.disabled = true;
+            btn.disabled = true;
+            
+            if (isCorrect) {
+                inputField.style.borderColor = 'var(--correct)';
+                inputField.style.backgroundColor = 'rgba(16,185,129,0.2)';
+            } else {
+                inputField.style.borderColor = 'var(--incorrect)';
+                inputField.style.backgroundColor = 'rgba(239,68,68,0.2)';
+            }
+            
+            processAnswer(isCorrect);
+        };
+
+        btn.onclick = handleSubmit;
+        
         setTimeout(() => {
-            currentQuestionIndex++;
-            renderQuestion();
-        }, 1200);
+            const inp = document.getElementById('inline-blank-field');
+            if(inp) {
+                inp.focus();
+                inp.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') handleSubmit();
+                });
+            }
+        }, 100);
+        
+        container.appendChild(btn);
     }
 
-    function showResults() {
-        showView('results-view');
-        const total = Math.min(10, currentQuestions.length);
-        document.getElementById("final-score").innerText = `${score} / ${total}`;
+    function renderMatching(container) {
+        const wrap = document.createElement('div');
+        wrap.className = 'matching-grid';
         
-        let feedback = "¡Buen trabajo! Sigue practicando para dominar la materia.";
-        if (score === total) feedback = "¡Rendimiento perfecto! Nivel Ego Estelar alcanzado ⚽🔥";
-        else if (score >= total * 0.8) feedback = "¡Excelente desempeño! Estás listo para el torneo.";
+        const leftCol = document.createElement('div'); leftCol.className = 'match-col';
+        const rightCol = document.createElement('div'); rightCol.className = 'match-col';
         
-        document.getElementById("results-feedback").innerText = feedback;
-    }
+        let pairs = [];
+        currentQuestion.options.forEach(opt => {
+            if(opt.includes('=')) {
+                let parts = opt.split('=');
+                pairs.push({ left: parts[0].trim(), right: parts[1].trim() });
+            }
+        });
+        
+        let leftItems = shuffleArray(pairs.map(p => p.left));
+        let rightItems = shuffleArray(pairs.map(p => p.right));
+        let matchesLeft = pairs.length;
+        
+        let selectedLeftBtn = null;
+        let selectedRightBtn = null;
 
-    // Prevención de pérdida de sesión al cambiar de materia por accidente (TASK-503)
-    function confirmLeaveQuiz() {
-        if (confirm("¿Estás seguro de que deseas salir? Perderás el progreso de tu cuestionario actual.")) {
-            showSubjectsView();
+        function checkMatch() {
+            if (selectedLeftBtn && selectedRightBtn) {
+                initAudio();
+                const lText = selectedLeftBtn.innerText;
+                const rText = selectedRightBtn.innerText;
+                
+                const isMatch = pairs.some(p => p.left === lText && p.right === rText);
+                
+                if (isMatch) {
+                    playSound('correct');
+                    selectedLeftBtn.classList.replace('selected', 'matched');
+                    selectedRightBtn.classList.replace('selected', 'matched');
+                    selectedLeftBtn = null;
+                    selectedRightBtn = null;
+                    matchesLeft--;
+                    
+                    if (matchesLeft === 0) {
+                        setTimeout(() => processAnswer(true), 500);
+                    }
+                } else {
+                    playSound('incorrect');
+                    selectedLeftBtn.classList.add('error');
+                    selectedRightBtn.classList.add('error');
+                    
+                    setTimeout(() => {
+                        selectedLeftBtn.classList.remove('error', 'selected');
+                        selectedRightBtn.classList.remove('error', 'selected');
+                        selectedLeftBtn = null;
+                        selectedRightBtn = null;
+                    }, 400);
+                    
+                    const allBtns = wrap.querySelectorAll('.match-btn');
+                    allBtns.forEach(b => b.disabled = true);
+                    processAnswer(false);
+                }
+            }
         }
+
+        leftItems.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'match-btn'; btn.innerText = text;
+            btn.onclick = () => {
+                initAudio();
+                if(btn.classList.contains('matched')) return;
+                if(selectedLeftBtn) selectedLeftBtn.classList.remove('selected');
+                selectedLeftBtn = btn;
+                btn.classList.add('selected');
+                checkMatch();
+            };
+            leftCol.appendChild(btn);
+        });
+
+        rightItems.forEach(text => {
+            const btn = document.createElement('button');
+            btn.className = 'match-btn'; btn.innerText = text;
+            btn.onclick = () => {
+                initAudio();
+                if(btn.classList.contains('matched')) return;
+                if(selectedRightBtn) selectedRightBtn.classList.remove('selected');
+                selectedRightBtn = btn;
+                btn.classList.add('selected');
+                checkMatch();
+            };
+            rightCol.appendChild(btn);
+        });
+
+        wrap.appendChild(leftCol);
+        wrap.appendChild(rightCol);
+        container.appendChild(wrap);
     }
 
-    function showSubjectsView() {
-        showView('subjects-view');
+    function processAnswer(isCorrect) {
+        stats.attempts++;
+        const feedback = document.getElementById('feedback-panel');
+        const fTitle = document.getElementById('feedback-title');
+        const fExp = document.getElementById('feedback-explanation');
+
+        if (isCorrect) {
+            playSound('correct');
+            stats.correct++;
+            fTitle.innerText = "⚽ ¡Golazo Mental! ¡Excelente Visión de Campo!";
+            fTitle.style.color = "var(--correct)";
+            feedback.className = "feedback correct-bg";
+            fExp.innerHTML = `<strong>Explicación Táctica:</strong> ${currentQuestion.explanation}`;
+            currentQueue.shift();
+        } else {
+            playSound('incorrect');
+            fTitle.innerText = "🚩 ¡Fuera de Lugar! Analiza la Jugada:";
+            fTitle.style.color = "var(--incorrect)";
+            feedback.className = "feedback incorrect-bg";
+            fExp.innerHTML = `<strong>Respuesta Correcta:</strong> <span style="color:var(--accent); font-weight:bold;">${currentQuestion.correctAnswer}</span><br><br><strong>Explicación Táctica:</strong> ${currentQuestion.explanation}`;
+            
+            const failedQ = currentQueue.shift();
+            currentQueue.push(failedQ);
+        }
+
+        updateStats();
+        feedback.style.display = 'block';
+        feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
-    // Inicializar al cargar la página
-    window.onload = initApp;
+    document.getElementById('next-btn').onclick = () => { initAudio(); loadNextQuestion(); };
+
+    function endModule() {
+        quizActive = false;
+        document.getElementById('sum-correct').innerText = stats.correct;
+        document.getElementById('sum-attempts').innerText = stats.attempts;
+        showScreen('summary');
+    }
+
+    initApp();
