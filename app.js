@@ -218,7 +218,7 @@ function renderSubjects() {
 /**
  * [BUG-001 Solucionado] Carga directa de preguntas al hacer clic en la materia (flujo v1.7)
  */
-async function loadSubjectQuiz(subject) {
+/*async function loadSubjectQuiz(subject) {
     activeQuizSubject = subject.name;
     showView('loading-view');
     try {
@@ -271,7 +271,7 @@ async function loadSubjectQuiz(subject) {
         alert("Error al cargar las preguntas de la materia.");
         showSubjectsView();
     }
-}
+}*/
 
 function renderQuestion() {
     if (currentQuestionIndex >= currentQuestions.length || currentQuestionIndex >= 10) {
@@ -366,7 +366,7 @@ function showSubjectsView() {
 /**
  * Carga el banco de preguntas y muestra los módulos basados en la columna "Category" (BUG-001)
  */
-async function loadSubjectData(subject) {
+async function loadSubjectQuiz(subject) {
     activeQuizSubject = subject.name;
     showView('loading-view');
     try {
