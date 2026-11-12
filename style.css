@@ -103,3 +103,31 @@ h2 { color: var(--text-main); margin-bottom: 15px; display: flex; justify-conten
     .container { padding: 5px; }
     .screen { padding: 18px; }
 }
+
+/* ==========================================================================
+   [EPIC-06] ESTILOS DE LA BARRA DE GAMIFICACIÓN Y RACHAS
+   ========================================================================== */
+.ego-bar {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid var(--border);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    margin: 15px auto 25px auto;
+    max-width: 600px;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+.ego-bar strong {
+    color: var(--accent);
+    font-size: 1.1rem;
+}
+@media(max-width: 600px) {
+    .ego-bar { flex-direction: column; gap: 10px; align-items: center; }
+}

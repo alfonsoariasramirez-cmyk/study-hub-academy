@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,13 @@
 
 <div class="container">
     <h1 id="app-title">⚡ Loading Academy...</h1>
+
+    <!-- [EPIC-06] Barra de Gamificación (Oculta hasta cargar datos) -->
+    <div id="ego-profile-bar" class="ego-bar" style="display: none;">
+        <span>🔥 Racha: <strong id="streak-count">0</strong> días</span>
+        <span>⭐ EP: <strong id="ep-score">0</strong></span>
+        <span>⚽ Rango: <strong id="ego-rank">Novato</strong></span>
+    </div>
 
     <div id="subject-select" class="screen">
         <h2 style="justify-content: center;" class="shonen-font">Selecciona tu Materia</h2>
@@ -54,6 +61,8 @@
         <div class="summary-stats">
             <p>Retos Dominados: <br><span class="big-number" id="sum-correct">0</span></p>
             <p style="margin-top: 15px;">Intentos Totales: <br><span class="big-number" id="sum-attempts" style="color: var(--primary);">0</span></p>
+            <!-- [EPIC-06] Feedback de Puntos Obtenidos -->
+            <p style="margin-top: 15px;">Puntos Obtenidos: <br><span class="big-number" id="sum-ep" style="color: var(--correct);">+0 EP</span></p>
             <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 15px;">(Las jugadas fallidas regresaron a la cancha para perfeccionar tu técnica)</p>
         </div>
         <div style="text-align: center;">
