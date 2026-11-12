@@ -9,14 +9,14 @@ let currentSubjectName = '';
 let quizActive = false;
 
 /* ==========================================================================
-   [EPIC-06] SISTEMA DE GAMIFICACIÓN, RACHAS Y PUNTOS DE EGO (LOCALSTORAGE)
+   [EPIC-06] SISTEMA DE GAMIFICACIÓN, RACHAS Y PUNTOS DE EXPERIENCIA (LOCALSTORAGE)
    ========================================================================== */
-let userStats = { streak: 0, ep: 0, rank: "Novato", lastLoginDate: "" };
-let sessionEP = 0; // Puntos ganados en la sesión activa
+let userStats = { streak: 0, exp: 0, rank: "Novato", lastLoginDate: "" };
+let sessionExp = 0; // Puntos ganados en la sesión activa
 
 function loadUserStats() {
     try {
-        const saved = localStorage.getItem("study_hub_user_stats_v2");
+        const saved = localStorage.getItem("study_hub_user_stats_exp");
         if (saved) userStats = JSON.parse(saved);
         checkStreak();
     } catch (e) { console.error("Error al leer localStorage:", e); }
@@ -46,21 +46,21 @@ function checkStreak() {
 }
 
 function saveUserStats() {
-    try { localStorage.setItem("study_hub_user_stats_v2", JSON.stringify(userStats)); } 
+    try { localStorage.setItem("study_hub_user_stats_exp", JSON.stringify(userStats)); } 
     catch (e) { console.error("Error al guardar en localStorage:", e); }
 }
 
 function updateEgoRank() {
-    if (userStats.ep >= 1000) userStats.rank = "Delantero Estrella ⭐";
-    else if (userStats.ep >= 500) userStats.rank = "Titular Indiscutible ⚽";
-    else if (userStats.ep >= 200) userStats.rank = "Promesa del Equipo 🏃‍♂️";
+    if (userStats.exp >= 1000) userStats.rank = "Delantero Estrella ⭐";
+    else if (userStats.exp >= 500) userStats.rank = "Titular Indiscutible ⚽";
+    else if (userStats.exp >= 200) userStats.rank = "Promesa del Equipo 🏃‍♂️";
     else userStats.rank = "Novato 🐣";
 }
 
 function updateEgoBarUI() {
     updateEgoRank();
     document.getElementById("streak-count").innerText = userStats.streak;
-    document.getElementById("ep-score").innerText = userStats.ep;
+    document.getElementById("exp-score").innerText = userStats.exp;
     document.getElementById("ego-rank").innerText = userStats.rank;
 }
 
@@ -267,7 +267,7 @@ function startModule(category) {
     initAudio(); 
     currentQueue = shuffleArray(JSON.parse(JSON.stringify(modulesData[category])));
     stats = { correct: 0, attempts: 0 };
-    sessionEP = 0; // Resetea los puntos a ganar por módulo
+    sessionExp = 0; // Resetea los puntos a ganar por módulo
     showScreen('quiz');
     loadNextQuestion();
 }
@@ -524,9 +524,9 @@ function processAnswer(isCorrect) {
     const fExp = document.getElementById('feedback-explanation');
 
     if (isCorrect) {
-        // [EPIC-06] Otorga 10 EP por acierto, actualiza interfaz y localstorage
-        sessionEP += 10;
-        userStats.ep += 10;
+        // [EPIC-06] Otorga 10 Exp por acierto, actualiza interfaz y localstorage
+        sessionExp += 10;
+        userStats.exp += 10;
         saveUserStats();
         updateEgoBarUI();
 
@@ -559,7 +559,7 @@ function endModule() {
     quizActive = false;
     document.getElementById('sum-correct').innerText = stats.correct;
     document.getElementById('sum-attempts').innerText = stats.attempts;
-    document.getElementById('sum-ep').innerText = `+${sessionEP} EP`; // Muestra los EP ganados en este módulo
+    document.getElementById('sum-exp').innerText = `+${sessionExp} Exp`; // Muestra los Exp ganados en este módulo
     showScreen('summary');
 }
 
