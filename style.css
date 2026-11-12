@@ -1,259 +1,201 @@
-/* ==========================================================================
-   VARIABLES Y CONFIGURACIÓN GLOBAL (Design System: Blue Lock / Tsubasa)
-   ========================================================================== */
-:root {
-  --bg-primary: #0b0f19;
-  --bg-card: #131b2e;
-  --accent-neon: #00f0ff;
-  --accent-gold: #ffd700;
-  --text-main: #f8fafc;
-}
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-main);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-/* Tarjetas de EGO y estadísticas */
-.ego-card {
-  background: linear-gradient(135deg, #131b2e 0%, #1f2937 100%);
-  border: 2px solid var(--accent-neon);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-  border-radius: 12px;
-}
+<style>
+        :root {
+            --bg-dark: #0b0f19;
+            --card-bg: #131b2e;
+            --accent-blue: #00d2ff;
+            --accent-red: #ff3366;
+            --accent-yellow: #ffcc00;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+        }
 
-/* :root {
-    --bg-dark: #0b0f19;
-    --card-bg: #131b2e;
-    --accent-blue: #00d2ff;
-    --accent-red: #ff3366;
-    --accent-yellow: #ffcc00;
-    --text-main: #f8fafc;
-    --text-muted: #94a3b8;
-    --border-color: #1e293b;
-} */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
 
-/*
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-dark);
-    color: var(--text-main);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-}
-*/
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 2.2rem;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
 
-h1 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 900;
-    font-size: 2.2rem;
-    text-transform: uppercase;
-    background: linear-gradient(135deg, var(--accent-blue), var(--accent-yellow));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: 1px;
-    margin-bottom: 5px;
-}
+        .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
 
-.subtitle {
-    font-size: 0.9rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 12px;
-}
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
 
-/* ==========================================================================
-   [EPIC-06] ESTILOS DE LA BARRA DE GAMIFICACIÓN Y RACHAS
-   ========================================================================== */
-.ego-bar {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    background: rgba(0, 210, 255, 0.08);
-    border: 1px solid var(--border-color);
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    margin-top: 5px;
-}
+        .loading, .error-box {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+        }
 
-.ego-bar strong {
-    color: var(--accent-yellow);
-}
+        .error-box {
+            color: var(--accent-red);
+        }
 
-/* ==========================================================================
-   CONTENEDORES Y TARJETAS DE INTERFAZ
-   ========================================================================== */
-.container {
-    width: 100%;
-    max-width: 800px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
+        .btn {
+            background: linear-gradient(135deg, #0070f3, var(--accent-blue));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            margin-top: 15px;
+            min-height: 48px;
+        }
 
-.loading, .error-box {
-    text-align: center;
-    padding: 40px;
-    font-size: 1.1rem;
-}
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3);
+        }
 
-.error-box {
-    color: var(--accent-red);
-}
+        /* Grid de Materias */
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
 
-.btn {
-    background: linear-gradient(135deg, #0070f3, var(--accent-blue));
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    margin-top: 15px;
-    min-height: 48px;
-}
+        .subject-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
 
-.btn:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 210, 255, 0.3);
-}
+        .subject-card:hover {
+            border-color: var(--accent-blue);
+            background: rgba(0, 210, 255, 0.05);
+            transform: translateY(-3px);
+        }
 
-/* ==========================================================================
-   GRID DE MATERIAS Y TARJETAS TÁCTILES
-   ========================================================================== */
-/* ==========================================================================
-   ESTILOS ESPECÍFICOS PARA LA VISTA DE MÓDULOS Y MATERIAS
-   ========================================================================== */
+        .subject-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
 
-.subjects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 18px; /* Espaciado uniforme entre tarjetas */
-    margin-top: 24px;
-}
+        .subject-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
 
-.subject-card {
-    background: linear-gradient(135deg, rgba(19, 27, 46, 0.9) 0%, rgba(31, 41, 55, 0.7) 100%);
-    border: 1px solid var(--border-color);
-    border-radius: 14px;
-    padding: 24px 20px; /* Espaciado interno cómodo para texto de varias líneas */
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 120px; /* Altura mínima robusta para títulos largos de módulos */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-}
+        /* Pantalla de Cuestionario */
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
 
-.subject-card:hover {
-    border-color: var(--accent-blue);
-    background: linear-gradient(135deg, rgba(19, 27, 46, 1) 0%, rgba(0, 210, 255, 0.08) 100%);
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px -3px rgba(0, 210, 255, 0.2);
-}
+        .question-text {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
 
-.subject-icon {
-    font-size: 2rem;
-    margin-bottom: 8px;
-}
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
 
-.subject-name {
-    font-weight: 700;
-    font-size: 1.05rem;
-    line-height: 1.4;
-    color: var(--text-main);
-}
+        .option-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            padding: 16px 20px;
+            border-radius: 10px;
+            color: var(--text-main);
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 55px; /* Optimización táctil móvil */
+        }
 
+        .option-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-blue);
+        }
 
-/* ==========================================================================
-   VISTA DE CUESTIONARIO Y RESPUESTAS (OPTIMIZACIÓN MÓVIL)
-   ========================================================================== */
-.quiz-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 12px;
-}
+        .option-btn.correct {
+            background: rgba(0, 255, 128, 0.2);
+            border-color: #00ff80;
+        }
 
-.question-text {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 25px;
-    line-height: 1.5;
-}
+        .option-btn.incorrect {
+            background: rgba(255, 51, 102, 0.2);
+            border-color: var(--accent-red);
+        }
 
-.options-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
+        .hidden {
+            display: none !important;
+        }
 
-.option-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    padding: 16px 20px;
-    border-radius: 10px;
-    color: var(--text-main);
-    text-align: left;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    min-height: 55px; /* Altura optimizada para interacción táctil en smartphones */
-}
+        /* Panel de Resultados */
+        .results-box {
+            text-align: center;
+            padding: 20px;
+        }
 
-.option-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--accent-blue);
-}
-
-.option-btn.correct {
-    background: rgba(0, 255, 128, 0.2);
-    border-color: #00ff80;
-}
-
-.option-btn.incorrect {
-    background: rgba(255, 51, 102, 0.2);
-    border-color: var(--accent-red);
-}
-
-.hidden {
-    display: none !important;
-}
-
-.results-box {
-    text-align: center;
-    padding: 20px;
-}
-
-.score-display {
-    font-size: 3rem;
-    font-family: 'Montserrat', sans-serif;
-    color: var(--accent-yellow);
-    margin: 15px 0;
-}
+        .score-display {
+            font-size: 3rem;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--accent-yellow);
+            margin: 15px 0;
+        }
+    </style>

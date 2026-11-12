@@ -1,61 +1,41 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    <!-- Google Fonts: Inter & Montserrat para estética Shonen / Tsubasa -->
+    <title>Study Hub - Academy Edition (v1.7)</title>
+    <!-- Google Fonts: Inter y Montserrat para estilo Shonen / Deportivo -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Hoja de estilos modular para separación de incumbencias (Separation of Concerns) -->
-    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Encabezado Principal y Barra de Estado del Estudiante -->
     <header>
         <h1 id="app-title">Study Hub Academy</h1>
-        <div class="subtitle">Ego & Performance System v2.0</div>
-        
-        <!-- [EPIC-06] Barra de Gamificación, Rachas y Puntos de Experiencia (EP) -->
-        <div id="ego-profile-bar" class="ego-bar">
-            <span>🔥 Racha: <strong id="streak-count">0</strong> días</span>
-            <span>⭐ Puntos EP: <strong id="ep-score">0</strong></span>
-            <span>⚽ Rango: <strong id="ego-rank">Novato</strong></span>
-        </div>
+        <div class="subtitle">Ego & Performance System v1.7</div>
     </header>
 
-    <!-- Vista de Módulos / Categorías de la Materia -->
-        <div id="modules-view" class="hidden">
-            <div class="quiz-header">
-                <span id="modules-subject-title" style="font-weight: 700; color: var(--accent-blue);">MATEMÁTICAS</span>
-                <button class="btn" style="margin-top: 0; padding: 6px 12px; font-size: 0.8rem; background: var(--border-color);" onclick="showSubjectsView()">← Cambiar Materia</button>
-            </div>
-            <div id="modules-grid" class="subjects-grid"></div>
-        </div>
-        
     <div class="container">
-        <!-- Vista 1: Indicador de Carga Inicial de Recursos -->
+        <!-- Estado de Carga -->
         <div id="loading-view" class="loading">
-            Cargando configuración táctica y banco de reactivos (v2.0)...
+            Cargando configuración táctica y banco de reactivos...
         </div>
 
-        <!-- Vista 2: Manejo de Errores de Red / Fallback (TASK-501) -->
+        <!-- Pantalla de Error de Red con Reintento (TASK-501) -->
         <div id="error-view" class="error-box hidden">
             <p id="error-message">No se pudo establecer conexión con el servidor central de Google Sheets.</p>
             <button class="btn" onclick="initApp()">Reintentar Conexión</button>
         </div>
 
-        <!-- Vista 3: Selector Dinámico de Materias -->
+        <!-- Selector de Materias -->
         <div id="subjects-view" class="hidden">
             <h2 style="margin-bottom: 15px; font-size: 1.3rem;">Selecciona tu Materia</h2>
             <div id="subjects-grid" class="subjects-grid"></div>
         </div>
 
-        <!-- Vista 4: Contenedor del Cuestionario Interactivo -->
+        <!-- Contenedor del Cuestionario -->
         <div id="quiz-view" class="hidden">
             <div class="quiz-header">
                 <span id="quiz-subject-title" style="font-weight: 700; color: var(--accent-blue);">Materia</span>
-                <!-- Prevención de pérdida de sesión (TASK-503) -->
                 <button class="btn" style="margin-top: 0; padding: 6px 12px; font-size: 0.8rem; background: var(--border-color);" onclick="confirmLeaveQuiz()">Cambiar Materia</button>
             </div>
             <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;" id="question-progress">Pregunta 1 de 10</div>
@@ -63,7 +43,7 @@
             <div class="options-list" id="options-container"></div>
         </div>
 
-        <!-- Vista 5: Panel de Resultados y Feedback de Entrenamiento -->
+        <!-- Pantalla de Resultados -->
         <div id="results-view" class="hidden results-box">
             <h2>¡Entrenamiento Finalizado!</h2>
             <div class="score-display" id="final-score">0 / 0</div>
@@ -71,8 +51,5 @@
             <button class="btn" onclick="showSubjectsView()">Volver al Menú Principal</button>
         </div>
     </div>
-
-    <!-- Script principal modular de lógica de negocio -->
-    <script src="app.js" defer></script>
 </body>
 </html>
